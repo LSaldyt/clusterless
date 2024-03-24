@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "clusterless-dmar"
+version = "0.1.0"
+description = "Clusterless Multi-Agent Rollout"
+authors = ["LSaldyt <lucassaldyt@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fire = "^0.6.0"
+rich = "^13.7.1"
+numpy = "^1.26.4"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
