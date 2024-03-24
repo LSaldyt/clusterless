@@ -1,0 +1,14 @@
+{
+    "version": "4c862ab",
+    "main_settings": {
+        "experiment_folder": "experiments",
+        "script_folder": "scripts",
+        "version": "4c862ab"
+    },
+    "seed": 2024,
+    "parent_dir": "data/experiments/",
+    "ablation": {
+        "version": "4c862ab"
+    },
+    "registry": "<science.registry.Registry object at 0x7ff40cb16350>"
+}

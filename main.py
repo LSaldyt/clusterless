@@ -20,6 +20,8 @@ def define_settings(real=False):
     settings.update(
         main_settings=Settings(experiment_folder='experiments', script_folder='scripts'),
         seed=datetime.now().year,
+        parent_dir=parent_dir,
+        ablation=Settings()
         )
     return settings
 
