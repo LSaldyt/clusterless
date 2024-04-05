@@ -1,4 +1,11 @@
+.openaikey
+.openaikey_bad
+data/data_bad.json
+
+
+
 # Conventional Python .gitignore from github
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
