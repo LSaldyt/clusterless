@@ -1,14 +1,16 @@
 import numpy as np
 
 from . import utils
-
 def create_grid(gen, grid_shape, probs, agent_index=3):
     ''' Create an initial environment from a multinomial distribution '''
     grid = gen.choice(np.arange(len(probs)), size=grid_shape, p=list(probs.values()))
     # Re-assign agents to unique numbers, e.g. [3, 3, 3] becomes [3, 4, 5]
     mask = grid == agent_index
+    size = grid_shape[0]
+
     grid[mask] = (np.arange(np.sum(mask)) + agent_index)
-    return grid
+    coordinates = utils.cartesian_product(np.arange(size), np.arange(size))
+    return grid, coordinates
 
 def render(grid, syms):
     ''' Render the environment in questionable unicode '''
@@ -73,3 +75,29 @@ def views(grid, agent_coords, view_size=3):
         view_coords    = view_coords % grid.shape[0]
         view           = grid[view_coords[:, 0], view_coords[:, 1]]
         yield view_coords, view.reshape((view_size, view_size))
+
+def get_agents(grid, coordinates, codes):
+    mask     = grid >= codes['agent']
+    codes    = grid[mask]
+    coords   = coordinates[mask.reshape((np.prod(grid.shape),))]
+    n_agents = np.sum(mask)
+    return codes, coords, n_agents
+
+''' Memory is a series of views over time 
+    Agents will move, goals may be taken, 
+    otherwise empty/obstacle are certain, 
+    agents/goals in current time step are certain '''
+
+def init_memory(grid, agent_codes, codes):
+    return {k : (np.full(grid.shape, codes['unseen']), None) # type: ignore
+            for k in agent_codes}
+
+def sense_environment(grid, memory, agent_codes, agent_coords, codes):
+    for c, (view_coords, view) in zip(agent_codes, views(grid, agent_coords)): # Important: views should be taken before transitions for consistency
+        mem, _ = memory[c]
+        was_agent_mask = mem >= codes['agent']
+        was_goal_mask  = mem == codes['goal']
+        mem[was_agent_mask] = codes['old_agent'] # Old agent locations (uniform for now)
+        mem[was_goal_mask]  = codes['old_goal']  # Old goals are inverted
+        mem[view_coords[:, 0], view_coords[:, 1]] = view.ravel() # New information (overwrites)
+        yield c, view, mem

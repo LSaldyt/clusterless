@@ -10,3 +10,12 @@ def box(size=3):
 
 def broadcast(a, n, axis=-1):
     return np.repeat(np.expand_dims(a, axis), n, axis)
+
+def cartesian_product(*arrays):
+    ''' Convenience. From https://stackoverflow.com/questions/11144513/cartesian-product-of-x-and-y-array-points-into-single-array-of-2d-points'''
+    la = len(arrays)
+    dtype = np.result_type(*arrays)
+    arr = np.empty([len(a) for a in arrays] + [la], dtype=dtype)
+    for i, a in enumerate(np.ix_(*arrays)):
+        arr[...,i] = a
+    return arr.reshape(-1, la)
