@@ -27,12 +27,11 @@ def run(*args):
 
     grid_shape = (size, size)
     grid = create_grid(gen, grid_shape, probs)
-    print(render(grid, symbols))
 
     action_space   = np.array([[0, 0], [0, 1], [1, 0], [-1, 0], [0, -1]])
     coordinates    = cartesian_product(np.arange(size), np.arange(size))
 
-    for i in range(128):
+    for i in range(10):
         agent_mask     = grid >= codes['agent']
         agent_codes    = grid[agent_mask]
         agent_coords   = coordinates[agent_mask.reshape(size * size,)]
@@ -42,12 +41,13 @@ def run(*args):
         action_indices = gen.integers(low=0, high=action_space.shape[0], size=(n_agents,)) # type: ignore (Silence! My code is right!)
         actions        = action_space[action_indices]
 
+        print(render(grid, symbols))
+        view_arr = views(grid, agent_coords, codes, wrap=True)
+        for j in range(n_agents): # type: ignore
+            print(f'View of agent {symbols[agent_codes[j]]}')
+            print(render(view_arr[j, :, :], symbols))
         info = transition(grid, actions, agent_coords, agent_codes, codes)
         print(f'Step {i}: ' + ('goals acheived: {n_goals_achieved}, '
                                'collisions: {n_collisions_obstacle} (obstacle) {n_collisions_agents} (agent)'
                    ).format(**info))
-        print(render(grid, symbols))
-        for j in range(n_agents): # type: ignore
-            view_arr = views(grid, agent_coords, codes)
-            print(f'View of agent {agent_codes[j]}')
-            print(render(view_arr[j, :, :], symbols))
+        print('-' * 80)

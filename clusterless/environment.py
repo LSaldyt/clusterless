@@ -74,16 +74,16 @@ def views(grid, agent_coords, codes, view_size=3, wrap=True):
     n_agents = agent_coords.shape[0]
     size     = grid.shape[0]
     view_box = utils.box(view_size)
-    views    = np.zeros((n_agents, view_size, view_size), dtype=np.int16)
+    views = np.zeros((n_agents, view_size, view_size), dtype=np.int16)
     for i in range(n_agents): # Seemed intuitive, faster and more memory efficient than a vectorized operation
         view_coords = view_box + agent_coords[i, :]
         if wrap: # Pacman style :D
             view_coords = view_coords % grid.shape[0]
-            view = grid[view_coords[:, 0], view_coords[:, 1]]
+            view        = grid[view_coords[:, 0], view_coords[:, 1]]
         else:
             view_mask  = (view_coords < size).all() & (view_coords > 0).all()
             view       = np.where(view_mask, 
                                   grid[view_coords[:, 0], view_coords[:, 1]],
                                   codes['unseen'])
-        views[i, :, :] = view.reshape((view_size, view_size)) 
+        views[i, :, :] = view.reshape((view_size, view_size))
     return views
