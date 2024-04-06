@@ -24,21 +24,17 @@ def set_at(grid, coords, values):
     ''' Set grid by vectorized coordinates to new values '''
     grid[coords[:, 0], coords[:, 1]] = values
 
-def transition(grid, actions, agent_coords, agent_codes, codes, wrap=True):
+def transition(grid, actions, agent_coords, agent_codes, codes):
     ''' Note: This function MODIFIES grid intentionally, for efficiency.
 
         Move all agents at once according to their actions:
         Agent actions can be stay, up, down, left, and right
         If an agent touches a goal, that goal is achieved. 
-        Agents cannot collide.. or they die?
-        Agents cannot step into obstacles.. or they die? '''
+        Agents cannot step into obstacles.. or they stay in place at a penalty 
+        Agents cannot collide.. or they die? ☠'''
     # Progress actions, (optionally) enforce grid boundaries
-    next_coords = (agent_coords + actions) 
-    if wrap: # Pacman style :D
-        next_coords = next_coords % (grid.shape[0])
-    else:
-        next_coords = np.minimum(np.maximum(next_coords, 0), grid.shape[0] - 1)
-
+    next_coords    = (agent_coords + actions) 
+    next_coords    = next_coords % (grid.shape[0])
     next_locations = grid[next_coords[:, 0], next_coords[:, 1]]
     # Enforce obstacles (and dead agents as obstacles)
     allowed_move   = ((next_locations != codes['obstacle']) & (next_locations != codes['dead']))
@@ -66,24 +62,14 @@ def transition(grid, actions, agent_coords, agent_codes, codes, wrap=True):
         n_collisions_agents   = np.sum(unique_counts) - unique_counts.shape[0],
     )
 
-def views(grid, agent_coords, codes, view_size=3, wrap=True):
+def views(grid, agent_coords, view_size=3):
     ''' Produce local views for all agents.
         A view is a local n x n grid around an agent.
-        View that go beyond the border of the grid are padded.
-        agent_coords ↦ [np.array()] '''
+        View that go beyond the border of the grid are padded. '''
     n_agents = agent_coords.shape[0]
-    size     = grid.shape[0]
     view_box = utils.box(view_size)
-    views = np.zeros((n_agents, view_size, view_size), dtype=np.int16)
     for i in range(n_agents): # Seemed intuitive, faster and more memory efficient than a vectorized operation
-        view_coords = view_box + agent_coords[i, :]
-        if wrap: # Pacman style :D
-            view_coords = view_coords % grid.shape[0]
-            view        = grid[view_coords[:, 0], view_coords[:, 1]]
-        else:
-            view_mask  = (view_coords < size).all() & (view_coords > 0).all()
-            view       = np.where(view_mask, 
-                                  grid[view_coords[:, 0], view_coords[:, 1]],
-                                  codes['unseen'])
-        views[i, :, :] = view.reshape((view_size, view_size))
-    return views
+        view_coords    = view_box + agent_coords[i, :]
+        view_coords    = view_coords % grid.shape[0]
+        view           = grid[view_coords[:, 0], view_coords[:, 1]]
+        yield view_coords, view.reshape((view_size, view_size))
