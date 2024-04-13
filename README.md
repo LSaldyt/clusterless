@@ -16,6 +16,22 @@ To add files with a specific extension (e.g. .csv):
 Individual files or directories can be added with [git lfs migrate](https://github.com/git-lfs/git-lfs/blob/main/docs/man/git-lfs-migrate.adoc). 
 Keep  in mind this will require force-pushing git history.
 
+## [Python](https://github.com/python/cpython/tree/main/Include) Installation
+
+To install Python 3.11 from scratch:  
+`git clone https://github.com/python/cpython`  
+`cd cpython`  
+`git checkout 3.11`  
+Edit `Include/patchlevel.h` to not have a `+` character which can break things..  
+`./configure --enable-optimizations` (optionally add `--prefix ~/mypython`)  
+`make -j 8` (or however many cores you have)  
+`make altinstall`  (avoid overwriting system install!)  
+`python3.11 --version`  
+Note you may need to install pip manually, e.g. common next steps are:  
+`python3.11 -m ensurepip`  
+`python3.11 -m pip --version`  
+`python3.11 -m pip install poetry`  
+
 ## [Poetry](https://python-poetry.org/) (Python Virtualenv)
 Install [poetry](https://python-poetry.org/).  
 To install all dependencies, use `poetry install`.  
