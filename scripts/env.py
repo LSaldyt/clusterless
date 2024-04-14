@@ -2,13 +2,11 @@ import string
 import numpy as np
 from clusterless.environment import create_grid, render, transition, get_agents, init_memory, sense_environment
 
-def run(*args):
+def run(size=8, timesteps=16):
     ''' First three symbols are reserved (empty, obstacle, goal)
         Last two symbols are reserved (unseen, dead agent)
         All symbols inbetween are used for agent codes '''
     symbols   = '·□★' + 'ζξΞѯƔȣ☭' + '♔♕♖♗♘♙♚♛♜♝♞♟' + string.ascii_lowercase + string.ascii_uppercase + '☺☆?☠'
-    size      = 8
-    timesteps = 128
     gen       = np.random.default_rng(2024)
     probs     = dict(empty=0.5, obstacle=0.35, goal=0.1, agent=0.05) # Order matters! Agents come last
     codes     = {**{k : i for i, k in enumerate(probs.keys())},
@@ -35,7 +33,7 @@ def run(*args):
             print(f'Memory of agent {symbols[c]}')
             print(render(mem, symbols))
 
-        action_indices = gen.integers(low=0, high=action_space.shape[0], size=(n_agents,)) # type: ignore (Silence! My code is right!)
+        action_indices = gen.integers(low=0, high=action_space.shape[0], size=(n_agents,)) 
         actions        = action_space[action_indices]
 
         info = transition(grid, actions, agent_coords, agent_codes, codes) # Important: Do transition at the end of the loop
