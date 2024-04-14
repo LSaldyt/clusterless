@@ -6,6 +6,8 @@ class BaseExperiment(Experiment):
         self.ensure(**kwargs) # e.g. timesteps=8
         s = self.settings     # Shorthand
 
+        score = 0 # Number of goals achieved
+
         grid, coordinates = create_grid(s.gen, (s.size, s.size), s.probs)
 
         agent_codes, agent_coords, n_agents = get_agents(grid, coordinates, s.codes)
@@ -26,6 +28,8 @@ class BaseExperiment(Experiment):
             actions = s.policy(s, n_agents, sense_input)
 
             info = transition(grid, actions, agent_coords, agent_codes, s.codes) # Important: Do transition at the end of the loop
+            score += info['n_goals_achieved']
+            info.update(score=score)
             print(f'Step {t}: {info}')
             self.log('info', info)
             print('-' * 80)
