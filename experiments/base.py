@@ -16,6 +16,7 @@ def define_experiments(registry):
         gen     = np.random.default_rng(2024),
         probs   = dict(empty=0.5, obstacle=0.35, goal=0.1, agent=0.05), # Order matters! Agents come last
         timesteps = 128,
+        environment_samples=128,
         policy='random',
 
         action_space = np.array([[0, 0], [0, 1], [1, 0], [-1, 0], [0, -1]])

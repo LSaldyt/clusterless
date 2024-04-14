@@ -58,7 +58,10 @@ def transition(grid, actions, agent_coords, agent_codes, codes):
     collision_coords = unique_coords[collision_mask]
     if (collision_mask).any():
         set_at(grid, collision_coords, codes['dead'])
-        coll_coord_mask   = np.all(final_coords == collision_coords, axis=-1)
+        coll_coord_mask = np.array([
+            (final_coords[i, :] == collision_coords).any()
+            for i in range(final_coords.shape[0])
+            ])
         reached_locations = next_locations[coll_coord_mask]
     else:
         reached_locations = next_locations
