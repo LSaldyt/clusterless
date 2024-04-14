@@ -5,6 +5,6 @@ def run(exp='env_8'):
     parent = Path('data/experiments')
     exp    = parent / exp
     latest = [p for p in exp.iterdir()][-1]
-    df = pd.read_csv(latest / 'data/info.csv')
+    df = pd.read_csv(latest / 'data/summary.csv')
     print(df)
     print(df.describe())

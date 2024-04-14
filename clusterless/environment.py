@@ -48,7 +48,6 @@ def transition(grid, actions, agent_coords, agent_codes, codes):
     # Enforce obstacles (and dead agents as obstacles)
     allowed_move   = ((next_locations != codes['obstacle']) & (next_locations != codes['dead']))
     final_coords   = np.where(utils.broadcast(allowed_move, 2), next_coords, agent_coords)
-    next_locations = grid[final_coords[:, 0], final_coords[:, 1]]
     # Move agents to (filtered) locations
     set_at(grid, agent_coords, codes['empty'])
     set_at(grid, final_coords, agent_codes)
@@ -58,13 +57,8 @@ def transition(grid, actions, agent_coords, agent_codes, codes):
     collision_coords = unique_coords[collision_mask]
     if (collision_mask).any():
         set_at(grid, collision_coords, codes['dead'])
-        coll_coord_mask = np.array([
-            (final_coords[i, :] == collision_coords).any()
-            for i in range(final_coords.shape[0])
-            ])
-        reached_locations = next_locations[coll_coord_mask]
-    else:
-        reached_locations = next_locations
+    non_collision_coords = unique_coords[collision_mask == False]
+    reached_locations    = grid[non_collision_coords[:, 0], non_collision_coords[:, 1]]
 
     # Count goals and collision types
     goal_mask = reached_locations == codes['goal']
