@@ -22,11 +22,11 @@ class BaseExperiment(Experiment):
                 
                 sense_input = list(sense_environment(grid, memory, agent_codes, agent_coords, s.codes, t))
 
-                for c, mem, view in sense_input:
+                for c, view, mem in sense_input:
                     print(f'View of agent {s.symbols[c]}')
                     print(render(view, s.symbols))
                     print(f'Memory of agent {s.symbols[c]}')
-                    print(render(mem, s.symbols))
+                    print(render(mem.grid, s.symbols))
 
                 actions = policy(s, n_agents, sense_input)
 
