@@ -98,7 +98,7 @@ def init_memory(grid, agent_codes, codes):
             for k in agent_codes}
 
 def sense_environment(grid, memory, agent_codes, agent_coords, codes, timestep):
-    for c, (agent_coords, view_coords, view) in zip(agent_codes, views(grid, agent_coords)): # Important: views should be taken before transitions for consistency
+    for c, (ac, view_coords, view) in zip(agent_codes, views(grid, agent_coords)): # Important: views should be taken before transitions for consistency
         memory[c].grid[view_coords[:, 0], view_coords[:, 1]] = view.ravel() 
         memory[c].time[view_coords[:, 0], view_coords[:, 1]] = timestep
-        yield c, view, memory[c], agent_coords
+        yield c, view, memory[c], ac
