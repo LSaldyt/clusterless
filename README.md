@@ -42,6 +42,10 @@ If you would prefer to not use poetry, try:
 `source venv/bin/activate`  
 `pip install -r requirements.txt`
 
+## Font
+
+Optionally install [julia mono](https://juliamono.netlify.app/) to experience the full _*glory*_ of unicode rendering.
+
 ## Usage
 
 Programs are either called via scripts or experiments using `./run`. To see all available scripts and experiments, use:  
