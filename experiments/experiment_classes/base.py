@@ -1,5 +1,5 @@
 from science import Experiment
-from clusterless.environment import create_grid, render, transition, get_agents, init_memory, sense_environment
+from clusterless.environment import create_grid, render, transition, get_agents, init_memory, sense_environment, full_render
 from clusterless.policies    import available_policies
 
 import numpy as np
@@ -23,16 +23,10 @@ class BaseExperiment(Experiment):
             memory = init_memory(grid, agent_codes, s.codes)
 
             for t in range(s.timesteps):
-                print(render(grid, s.symbols))
                 agent_codes, agent_coords, n_agents = get_agents(grid, coordinates, s.codes)
-                
-                sense_input = list(sense_environment(grid, memory, agent_codes, agent_coords, s.codes, t))
+                sense_input = list(sense_environment(grid, memory, agent_codes, agent_coords, s, t))
 
-                for c, view, mem, coords in sense_input:
-                    print(f'View of agent {s.symbols[c]}')
-                    print(render(view, s.symbols))
-                    print(f'Memory of agent {s.symbols[c]}')
-                    print(render(mem.grid, s.symbols))
+                full_render(grid, sense_input, s)
 
                 actions = policy(s, n_agents, sense_input)
                 info    = transition(grid, actions, agent_coords, agent_codes, s.codes) # Important: Do transition at the end of the loop

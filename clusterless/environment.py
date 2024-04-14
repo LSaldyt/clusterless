@@ -29,6 +29,19 @@ def render(grid, syms):
             yield '\n'
     return ''.join(gen_syms())
 
+def full_render(grid, sense_input, s):
+    rendered_views = [(' ' * s.view_size + '\n') * s.view_size]
+    rendered_grids = [render(grid, s.symbols)]
+    codes          = []
+    for c, view, mem, coords in sense_input:
+        rendered_views.append(render(view,     s.symbols))
+        rendered_grids.append(render(mem.grid, s.symbols))
+        codes.append(f'agent {s.symbols[c]}')
+    descriptions   = [f'{name:<{s.size}}\n' for name in ['full'] + codes]
+    print(utils.horizontal_join(rendered_grids))
+    print(utils.horizontal_join(descriptions))
+    print(utils.horizontal_join(rendered_views, join=' ' * (s.size - s.view_size + 1)))
+
 def set_at(grid, coords, values):
     ''' Set grid by vectorized coordinates to new values '''
     grid[coords[:, 0], coords[:, 1]] = values
@@ -68,17 +81,17 @@ def transition(grid, actions, agent_coords, agent_codes, codes):
         n_collisions_agents   = np.sum(unique_counts) - unique_counts.shape[0],
     )
 
-def views(grid, agent_coords, view_size=3):
+def views(grid, agent_coords, s):
     ''' Produce local views for all agents.
         A view is a local n x n grid around an agent.
         View that go beyond the border of the grid are padded. '''
     n_agents = agent_coords.shape[0]
-    view_box = utils.box(view_size)
+    view_box = utils.box(s.view_size)
     for i in range(n_agents): # Seemed intuitive, faster and more memory efficient than a vectorized operation
         view_coords    = view_box + agent_coords[i, :]
         view_coords    = view_coords % grid.shape[0]
         view           = grid[view_coords[:, 0], view_coords[:, 1]]
-        yield agent_coords[i, :], view_coords, view.reshape((view_size, view_size))
+        yield agent_coords[i, :], view_coords, view.reshape((s.view_size, s.view_size))
 
 def get_agents(grid, coordinates, codes):
     mask     = grid >= codes['agent']
@@ -97,8 +110,8 @@ def init_memory(grid, agent_codes, codes):
                        np.full(grid.shape, 0)) 
             for k in agent_codes}
 
-def sense_environment(grid, memory, agent_codes, agent_coords, codes, timestep):
-    for c, (ac, view_coords, view) in zip(agent_codes, views(grid, agent_coords)): # Important: views should be taken before transitions for consistency
+def sense_environment(grid, memory, agent_codes, agent_coords, s, timestep):
+    for c, (ac, view_coords, view) in zip(agent_codes, views(grid, agent_coords, s)): # Important: views should be taken before transitions for consistency
         memory[c].grid[view_coords[:, 0], view_coords[:, 1]] = view.ravel() 
         memory[c].time[view_coords[:, 0], view_coords[:, 1]] = timestep
         yield c, view, memory[c], ac

@@ -19,3 +19,8 @@ def cartesian_product(*arrays):
     for i, a in enumerate(np.ix_(*arrays)):
         arr[...,i] = a
     return arr.reshape(-1, la)
+
+def horizontal_join(elements, join=' '):
+    element_lines = (el.split('\n') for el in elements)
+    rows = (join.join(row_items) for row_items in zip(*element_lines))
+    return '\n'.join(rows)
