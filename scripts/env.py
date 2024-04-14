@@ -37,7 +37,7 @@ def run(size=8, timesteps=16):
         actions        = action_space[action_indices]
 
         info = transition(grid, actions, agent_coords, agent_codes, codes) # Important: Do transition at the end of the loop
-        print(f'Step {t}: ' + ('goals acheived: {n_goals_achieved}, '
+        print(f'Step {t}: ' + ('goals achieved: {n_goals_achieved}, '
                                'collisions: {n_collisions_obstacle} (obstacle) {n_collisions_agents} (agent)'
                    ).format(**info))
         print('-' * 80)
