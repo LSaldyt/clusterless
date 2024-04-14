@@ -29,7 +29,7 @@ def run(*args):
         print(render(grid, symbols))
         agent_codes, agent_coords, n_agents = get_agents(grid, coordinates, codes)
         
-        for c, mem, view in sense_environment(grid, memory, agent_codes, agent_coords, codes):
+        for c, view, mem in sense_environment(grid, memory, agent_codes, agent_coords, codes):
             print(f'View of agent {symbols[c]}')
             print(render(view, symbols))
             print(f'Memory of agent {symbols[c]}')
