@@ -83,7 +83,7 @@ def main(name, *args, **kwargs):
 
     try:
         log.info(f'Searching for experiment name={name} args={args}')
-        registry.find_and_run_experiment(name, args, registry.shared.main_settings)
+        registry.find_and_run_experiment(name, args, kwargs, registry.shared.main_settings)
     except KeyError as find_experiment_exception:
         try:
             log.info(f'Searching for script name={name} args={args}')

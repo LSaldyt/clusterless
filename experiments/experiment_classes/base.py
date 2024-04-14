@@ -6,7 +6,7 @@ from clusterless.environment import create_grid, render, transition, get_agents,
 
 class BaseExperiment(Experiment):
     def run(self, *args, **kwargs):
-        self.ensure()
+        self.ensure(**kwargs) # e.g. timesteps=8
         # self.log('info', dict(reward=0))
         # data = {'hello' : 'world'}
         # self.save_json('result', data)
