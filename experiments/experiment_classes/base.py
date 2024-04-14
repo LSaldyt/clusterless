@@ -1,10 +1,13 @@
 from science import Experiment
 from clusterless.environment import create_grid, render, transition, get_agents, init_memory, sense_environment
+from clusterless.policies    import available_policies
 
 class BaseExperiment(Experiment):
     def run(self, *args, **kwargs):
         self.ensure(**kwargs) # e.g. timesteps=8
         s = self.settings     # Shorthand
+
+        policy = available_policies[s.policy]
 
         score = 0 # Number of goals achieved
 
@@ -25,7 +28,7 @@ class BaseExperiment(Experiment):
                 print(f'Memory of agent {s.symbols[c]}')
                 print(render(mem, s.symbols))
 
-            actions = s.policy(s, n_agents, sense_input)
+            actions = policy(s, n_agents, sense_input)
 
             info = transition(grid, actions, agent_coords, agent_codes, s.codes) # Important: Do transition at the end of the loop
             score += info['n_goals_achieved']

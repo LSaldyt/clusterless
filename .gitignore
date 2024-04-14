@@ -1,8 +1,4 @@
-.openaikey
-.openaikey_bad
-data/data_bad.json
-
-
+pyproject.toml
 
 # Conventional Python .gitignore from github
 
