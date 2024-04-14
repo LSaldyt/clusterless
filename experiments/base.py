@@ -1,5 +1,6 @@
 from science import Settings, Experiment
 from .experiment_classes import BaseExperiment
+from clusterless.policies.random import random as random_policy
 
 import string
 import numpy as np
@@ -15,6 +16,7 @@ def define_experiments(registry):
         gen     = np.random.default_rng(2024),
         probs   = dict(empty=0.5, obstacle=0.35, goal=0.1, agent=0.05), # Order matters! Agents come last
         timesteps = 128,
+        policy=random_policy,
 
         action_space = np.array([[0, 0], [0, 1], [1, 0], [-1, 0], [0, -1]])
         )

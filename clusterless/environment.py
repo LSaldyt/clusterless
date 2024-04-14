@@ -1,4 +1,11 @@
 import numpy as np
+import numpy.typing as npt
+from dataclasses import dataclass
+
+@dataclass
+class Memory():
+    grid : npt.ArrayLike
+    time : npt.ArrayLike
 
 from . import utils
 def create_grid(gen, grid_shape, probs, agent_index=3):
@@ -89,15 +96,12 @@ def get_agents(grid, coordinates, codes):
     agents/goals in current time step are certain '''
 
 def init_memory(grid, agent_codes, codes):
-    return {k : (np.full(grid.shape, codes['unseen']), None) # type: ignore
+    return {k : Memory(np.full(grid.shape, codes['unseen']), 
+                       np.full(grid.shape, 0)) 
             for k in agent_codes}
 
-def sense_environment(grid, memory, agent_codes, agent_coords, codes):
+def sense_environment(grid, memory, agent_codes, agent_coords, codes, timestep):
     for c, (view_coords, view) in zip(agent_codes, views(grid, agent_coords)): # Important: views should be taken before transitions for consistency
-        mem, _ = memory[c]
-        was_agent_mask = mem >= codes['agent']
-        was_goal_mask  = mem == codes['goal']
-        mem[was_agent_mask] = codes['old_agent'] # Old agent locations (uniform for now)
-        mem[was_goal_mask]  = codes['old_goal']  # Old goals are inverted
-        mem[view_coords[:, 0], view_coords[:, 1]] = view.ravel() # New information (overwrites)
-        yield c, view, mem
+        memory[c].grid[view_coords[:, 0], view_coords[:, 1]] = view.ravel() 
+        memory[c].time[view_coords[:, 0], view_coords[:, 1]] = timestep
+        yield c, view, memory[c].grid

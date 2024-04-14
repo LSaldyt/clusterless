@@ -21,7 +21,13 @@ def define_settings(real=False):
         main_settings=Settings(experiment_folder='experiments', script_folder='scripts'),
         seed=datetime.now().year,
         parent_dir=parent_dir,
-        ablation=Settings()
+        ablation=Settings(),
+        meta=Settings(
+            flush_interval=1,
+            log_interval=1,
+            log_function=log.info,
+            timestamp=True
+            )
         )
     return settings
 
