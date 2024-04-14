@@ -45,12 +45,12 @@ def define_ablations(ablation):
         gpt3=ablation.derive(model='gpt-3.5-turbo', as_json=False),
         gpt4=ablation.derive(model='gpt-4', as_json=True))
 
-def find_and_run_script(script_name, args, main_settings):
+def find_and_run_script(script_name, args, kwargs, main_settings):
     script_file = f'{main_settings.script_folder}/{script_name}.py'
     log.info(f'Script file: {script_file}')
     if os.path.isfile(script_file):
         module = import_module(f'{main_settings.script_folder}.{script_name}', package='.')
-        code = module.run(*args)
+        code = module.run(*args, **kwargs)
         log.info(f'Finished running script {script_file}!')
         if code is not None and code != 0:
             return code
@@ -66,9 +66,9 @@ def list_scripts(main_settings):
 
 ''' The Registry object defines a find_and_run_experiments, similar to find_and_run_script'''
 
-def main(name, *args, real=True):
+def main(name, *args, **kwargs):
     registry = Registry()
-    registry.add_shared(define_settings(real=real))
+    registry.add_shared(define_settings())
     registry.add_ablations(define_ablations(registry.shared.ablation))
     for exp in define_experiments(registry):
         registry.add_experiment(exp)
@@ -87,7 +87,7 @@ def main(name, *args, real=True):
     except KeyError as find_experiment_exception:
         try:
             log.info(f'Searching for script name={name} args={args}')
-            find_and_run_script(name, args, registry.shared.main_settings)
+            find_and_run_script(name, args, kwargs, registry.shared.main_settings)
         except FileNotFoundError as find_script_exception:
             log.error(f'Experiment or Script {name} exception!\n'
                       f'Experiment exception: {find_experiment_exception}\n'
