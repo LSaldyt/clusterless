@@ -34,5 +34,7 @@ class BaseExperiment(Experiment):
                 print(f'Step {t}: {info}')
                 self.log(f'run_{i_r}', info)
                 print('-' * 80)
+                if n_goals == 0 or n_agents == 0:
+                    break
             assert score <= n_goals, f'{info}'
             self.log(f'summary', dict(score=score, percent=score/n_goals, env_index=i_r))
