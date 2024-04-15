@@ -10,7 +10,6 @@ def nearest(s, n_agents, sense_info, coordinates):
         unexplored = mem.grid == s.codes['unseen']
         possible_targets = goals | unexplored
         possible_coordinates = coordinates[possible_targets.reshape((np.prod((s.size,s.size)),))]
-        print(c)
         move = shortest_path(s, possible_coordinates, coords, coordinates, mem)
         actions[i,:]=move
     return actions
