@@ -115,3 +115,8 @@ def sense_environment(grid, memory, agent_codes, agent_coords, s, timestep):
         memory[c].grid[view_coords[:, 0], view_coords[:, 1]] = view.ravel() 
         memory[c].time[view_coords[:, 0], view_coords[:, 1]] = timestep
         yield c, view, memory[c], ac
+
+def merge_memory(mem_a, mem_b):
+    return np.where(mem_a.time < mem_b.time, mem_a.grid, mem_b.grid)
+
+  

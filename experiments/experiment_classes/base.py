@@ -14,10 +14,8 @@ class BaseExperiment(Experiment):
                  for i_r in range(s.environment_samples)]
 
         for i_r, grid, coordinates in grids:
-            score = 0 # Number of goals achieved
+            score   = 0 # Number of goals achieved
             n_goals = np.sum(grid == s.codes['goal'])
-
-            grid, coordinates = create_grid(s.gen, (s.size, s.size), s.probs)
 
             agent_codes, agent_coords, n_agents = get_agents(grid, coordinates, s.codes)
             memory = init_memory(grid, agent_codes, s.codes)
