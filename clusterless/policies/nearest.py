@@ -11,6 +11,7 @@ def nearest(s, n_agents, sense_info, coordinates):
         unexplored = mem.grid == s.codes['unseen']
         possible_targets = goals | unexplored
         possible_coordinates = coordinates[possible_targets.reshape((np.prod((s.size,s.size)),))]
+        print(c)
         move = shortest_path(s, possible_coordinates, coords, coordinates, mem)
         actions[i,:]=move
     return actions
@@ -19,30 +20,37 @@ def shortest_path(s, choices, coords, coordinates, mem):
     d = deque()
     visited = set() 
     obstacles = np.logical_or(mem.grid == s.codes['obstacle'],mem.grid == s.codes['dead'])
-    # print(obstacles)
     illegal = coordinates[obstacles.reshape((np.prod((s.size,s.size)),))]
     illegal = {tuple(illegal[i,:]) for i in range(illegal.shape[0])}
-    d.append((coords,[]))
+    possible_first_moves = {}
+    for action in action_space:
+        poss_first_move = (coords+action)%s.size
+        if tuple(poss_first_move) not in illegal:
+            d.append((poss_first_move,poss_first_move))
+            possible_first_moves[tuple(poss_first_move)] = 1
+    visited.add(tuple(coords))
     choices = {tuple(choices[i,:]) for i in range(choices.shape[0])}
     while len(d)>0:
-        cell, path = d.popleft()
-        path = deepcopy(path)
-        path.append(cell)
-        # print(f"popping {cell} with path {path}")
+        cell, first_cell = d.popleft()
+        possible_first_moves[tuple(first_cell)]-=1
         cell_tuple = tuple(cell)
+        first_cell_tuple = tuple(first_cell)
         visited.add(cell_tuple)
         if cell_tuple in choices:
-            print(f"going towards {cell_tuple}")
-            print(f"p0: {path[0]}, p1: {path[1]}")
-            print(f"move: {path[1]-path[0]}")
-            return path[1]-path[0]
+            # print(f"going towards {cell_tuple}")
+            # print(f"p0: {coords}, p1: {first_cell}")
+            # print(f"move: {first_cell-coords}")
+            # print(f"og set: {og_first_moves}")
+            # print(d)
+            return first_cell-coords
         neighbors = (cell + action_space) % s.size
-        # print(f"neighbors: {neighbors}")
         for neighbor in neighbors:
-            # neighbor = neighbor %s.size
-            # print(neighbor)
             n = tuple(neighbor)
-            # n = (n[0]%s.size,n[1]%s.size)
             if n not in visited and n not in illegal:
-                d.append((neighbor, path)) 
+                d.append((neighbor, first_cell))
+                possible_first_moves[first_cell_tuple]+=1
+        if possible_first_moves[first_cell_tuple] == 0: 
+            del possible_first_moves[first_cell_tuple]
+        if len(possible_first_moves) == 1:
+            return list(possible_first_moves.keys())[0]-coords 
     return np.array([0,0],dtype=np.int32)
