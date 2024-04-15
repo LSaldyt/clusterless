@@ -34,7 +34,11 @@ class BaseExperiment(Experiment):
                 print(f'Step {t}: {info}')
                 self.log(f'run_{i_r}', info)
                 print('-' * 80)
-                if n_goals == 0 or n_agents == 0:
+                remaining_goals = np.sum(grid == s.codes['goal'])
+                if remaining_goals == 0 or n_agents == 0:
+                    print(f"goals left: {remaining_goals}, agents left: {n_agents}")
+                    sense_input = list(sense_environment(grid, memory, agent_codes, agent_coords, s, t))
+                    full_render(grid, sense_input, s)
                     break
             assert score <= n_goals, f'{info}'
             self.log(f'summary', dict(score=score, percent=score/n_goals, env_index=i_r))
