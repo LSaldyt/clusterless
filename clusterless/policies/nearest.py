@@ -1,6 +1,5 @@
 import numpy as np
 from collections import deque
-from copy import deepcopy
 
 action_space = np.array([[0, 1], [1, 0], [-1, 0], [0, -1]])
 
