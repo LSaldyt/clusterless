@@ -26,7 +26,7 @@ class BaseExperiment(Experiment):
 
                 full_render(grid, sense_input, s)
 
-                actions = policy(s, n_agents, sense_input)
+                actions = policy(s, n_agents, sense_input, coordinates)
                 info    = transition(grid, actions, agent_coords, agent_codes, s.codes) # Important: Do transition at the end of the loop
 
                 score += info['n_goals_achieved']
