@@ -20,6 +20,7 @@ class BaseExperiment(Experiment):
             agent_codes, agent_coords, n_agents = get_agents(grid, coordinates, s.codes)
             memory = init_memory(grid, agent_codes, s.codes)
 
+            step_count = s.timesteps
             for t in range(s.timesteps):
                 agent_codes, agent_coords, n_agents = get_agents(grid, coordinates, s.codes)
                 sense_input = list(sense_environment(grid, memory, agent_codes, agent_coords, s, t))
@@ -38,7 +39,7 @@ class BaseExperiment(Experiment):
                 if remaining_goals == 0 or n_agents == 0:
                     print(f"goals left: {remaining_goals}, agents left: {n_agents}")
                     sense_input = list(sense_environment(grid, memory, agent_codes, agent_coords, s, t))
-                    full_render(grid, sense_input, s)
+                    step_count = t if remaining_goals==0 else s.timesteps
                     break
             assert score <= n_goals, f'{info}'
-            self.log(f'summary', dict(score=score, percent=score/n_goals, env_index=i_r))
+            self.log(f'summary', dict(score=score, percent=score/n_goals, step_count=step_count, env_index=i_r))
