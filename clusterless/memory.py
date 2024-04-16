@@ -15,25 +15,26 @@ class Memory():
     otherwise empty/obstacle are certain, 
     agents/goals in current time step are certain '''
 
-def views(map, agent_coords, s):
+def views(map, s):
     ''' Produce local views for all agents.
         A view is a local n x n map around an agent.
         View that go beyond the border of the map are padded. '''
-    n_agents = agent_coords.shape[0]
+    a_info   = map.agents_info
     view_box = utils.box(s.view_size)
-    for i in range(n_agents): # Seemed intuitive, faster and more memory efficient than a vectorized operation
-        view_coords    = view_box + agent_coords[i, :]
+    for i in range(a_info.n_agents): # Seemed intuitive, faster and more memory efficient than a vectorized operation
+        view_coords    = view_box + a_info.coords[i, :]
         view_coords    = view_coords % map.grid.shape[0]
         view           = map.grid[view_coords[:, 0], view_coords[:, 1]]
-        yield agent_coords[i, :], view_coords, view.reshape((s.view_size, s.view_size))
+        yield a_info.coords[i, :], view_coords, view.reshape((s.view_size, s.view_size))
 
-def init_memory(map, agent_codes, s):
+def init_memory(map, s):
     return {k : Memory(Map(s, np.full(map.grid.shape, s.codes['unseen'])), 
                        np.full(map.grid.shape, 0)) 
-            for k in agent_codes}
+            for k in map.agents_info.codes}
 
-def sense_environment(map, memory, agent_codes, agent_coords, s, timestep):
-    for c, (ac, view_coords, view) in zip(agent_codes, views(map, agent_coords, s)): 
+def sense_environment(map, memory, s, timestep):
+    a_info = map.agents_info
+    for c, (ac, view_coords, view) in zip(a_info.codes, views(map, s)): 
         memory[c].map.grid[view_coords[:, 0], view_coords[:, 1]] = view.ravel() 
         memory[c].time[    view_coords[:, 0], view_coords[:, 1]] = timestep
         yield c, view, memory[c], ac

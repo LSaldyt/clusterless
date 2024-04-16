@@ -18,7 +18,8 @@ def define_experiments(registry):
         timesteps = 128,
         environment_samples=128,
         view_size=3,
-        policy='nearest',
+        policy='rollout',
+        base_policy='nearest',
 
         action_space = np.array([[0, 0], [0, 1], [1, 0], [-1, 0], [0, -1]])
         )

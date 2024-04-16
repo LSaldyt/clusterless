@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.typing as npt
 from copy import deepcopy
+from collections import namedtuple
 
 from science import Settings
 
@@ -16,10 +17,13 @@ def render(mx, syms):
             yield '\n'
     return ''.join(gen_syms())
 
+AgentsInfo = namedtuple('AgentsInfo', ['codes', 'coords', 'n_agents'])
+
 class Map():
     grid     : npt.ArrayLike
     coords   : npt.ArrayLike
     settings : Settings
+    purity   : int
 
     def __init__(self, s, initial_grid=None):
         ''' Create an initial environment from a multinomial distribution '''
@@ -34,6 +38,8 @@ class Map():
 
         self.coordinates    = utils.cartesian_product(np.arange(s.size), np.arange(s.size))
         self.settings       = s
+        self.purity         = 0 # Integer that increments when grid is modified
+        self.cache          = dict()
         self._dont_deepcopy = {'coordinates', 'settings'} # Only deepcopy self.grid!
 
     def full_render(self, sense_input, s):
@@ -50,8 +56,10 @@ class Map():
         print(utils.horizontal_join(rendered_views, join=' ' * (s.size - s.view_size + 1)))
 
     def set_at(self, coords, values):
-        ''' Set grid by vectorized coordinates to new values '''
+        ''' Set grid by vectorized coordinates to new values 
+            This function is IMPURE, so it sets a flag accordingly '''
         self.grid[coords[:, 0], coords[:, 1]] = values # type: ignore
+        self._inc_purity()
 
     def coords_of(self, mask):
         return self.coordinates[mask.reshape((np.prod(self.grid.shape),))] # type: ignore
@@ -64,6 +72,21 @@ class Map():
     def count(self, *keys):
         mask = self.mask(*keys)
         return np.sum(mask) # type: ignore
+
+    @property
+    def agents_info(self):
+        key = ('a_info', self.purity)
+        if key not in self.cache:
+            mask     = self.grid >= self.settings.codes['agent']
+            codes    = self.grid[mask] # type: ignore
+            coords   = self.coords_of(mask)
+            n_agents = np.sum(mask)
+            self.cache[key] = AgentsInfo(codes, coords, n_agents)
+        return self.cache[key]
+
+    def _inc_purity(self):
+        self.purity += 1
+        self.cache = dict()
 
     def __copy__(self):
         cls = self.__class__

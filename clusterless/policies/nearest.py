@@ -3,16 +3,17 @@ from collections import deque
 
 action_space = np.array([[0, 1], [1, 0], [-1, 0], [0, -1]])
 
-def nearest(s, n_agents, sense_info, coordinates):
-    actions = np.zeros(shape=(n_agents,2),dtype=np.int32)
+def nearest(map, sense_info, base_policy, s):
+    a_info  = map.agents_info
+    actions = np.zeros(shape=(a_info.n_agents, 2), dtype=np.int32)
     for i, (c, view, mem, coords) in enumerate(sense_info):
         targets       = mem.map.mask('goal', 'unseen')
         target_coords = mem.map.coords_of(targets)
-        move = shortest_path(s, target_coords, coords, coordinates, mem)
-        actions[i,:]=move
+        move          = shortest_path(s, target_coords, coords, mem)
+        actions[i,:]  = move
     return actions
 
-def shortest_path(s, choices, coords, coordinates, mem):
+def shortest_path(s, choices, coords, mem):
     d = deque()
     visited = set() 
     obstacles = mem.map.mask('obstacle', 'dead')
