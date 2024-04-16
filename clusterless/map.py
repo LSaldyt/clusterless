@@ -36,11 +36,11 @@ class Map():
         else:
             self.grid = initial_grid # type: ignore
 
-        self.coordinates    = utils.cartesian_product(np.arange(s.size), np.arange(s.size))
+        self.coords         = utils.cartesian_product(np.arange(s.size), np.arange(s.size))
         self.settings       = s
         self.purity         = 0 # Integer that increments when grid is modified
         self.cache          = dict()
-        self._dont_deepcopy = {'coordinates', 'settings'} # Only deepcopy self.grid!
+        self._dont_deepcopy = {'coords', 'settings'} # Only deepcopy self.grid!
 
     def full_render(self, sense_input, s):
         rendered_views = [(' ' * s.view_size + '\n') * s.view_size]
@@ -62,7 +62,7 @@ class Map():
         self._inc_purity()
 
     def coords_of(self, mask):
-        return self.coordinates[mask.reshape((np.prod(self.grid.shape),))] # type: ignore
+        return self.coords[mask.reshape((np.prod(self.grid.shape),))] # type: ignore
 
     def mask(self, *keys, kind='or'):
         comb = np.logical_or if kind == 'or' else np.logical_and

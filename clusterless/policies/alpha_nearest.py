@@ -4,7 +4,8 @@ from collections import deque
 action_space = np.array([[0, 1], [1, 0], [-1, 0], [0, -1]])
 
 
-def alpha_nearest(s, n_agents, sense_info, coordinates):
+# def alpha_nearest(s, n_agents, sense_info, coordinates):
+def alpha_nearest(map, sense_info, base_policy, s):
     ''' This policy tries to balance exploration and exploitation with a tunable parameter alpha.
         Ideal: take the shortest path to the cell v which minimizes -log P(G(v)) + alpha*D(v)
             P(G(v)) is the probability that v is a goal. We write I(v) := -log P(G(v))
@@ -14,15 +15,16 @@ def alpha_nearest(s, n_agents, sense_info, coordinates):
             alpha*(D(v)-D(w))<I(w)-I(v)
         First Order Simplifications:
             We assume P(G(v)) is either 1 (goal seen at cell v) or the goal generation probability aka s.probs['goal']'''
-    actions = np.zeros(shape=(n_agents,2),dtype=np.int32)
+    a_info = map.agents_info
+    actions = np.zeros(shape=(a_info.n_agents,2),dtype=np.int32)
     for i, (c, view, mem, coords) in enumerate(sense_info):
-        goals = mem.grid == s.codes['goal']
+        goals = mem.map.grid == s.codes['goal']
         goals = goals.astype(float)
-        unexplored = mem.grid == s.codes['unseen']
+        unexplored = mem.map.grid == s.codes['unseen']
         unexplored = s.probs['goal']* unexplored.astype(float)
         possible_targets = (unexplored+goals).reshape((np.prod((s.size,s.size))),)
         print(f"checking for {c}")
-        move = shortest_path_alpha(s, possible_targets, coords, coordinates, mem)
+        move = shortest_path_alpha(s, possible_targets, coords, map.coords, mem)
         actions[i,:]=move
     return actions
 
@@ -30,7 +32,7 @@ def shortest_path_alpha(s, probabilities, coords, coordinates, mem):
     alpha = s.alpha
     d = deque()
     visited = set() 
-    obstacles = np.logical_or(mem.grid == s.codes['obstacle'],mem.grid == s.codes['dead'])
+    obstacles = np.logical_or(mem.map.grid == s.codes['obstacle'],mem.map.grid == s.codes['dead'])
     illegal = coordinates[obstacles.reshape((np.prod((s.size,s.size)),))]
     illegal = {tuple(illegal[i,:]) for i in range(illegal.shape[0])}
     possible_first_moves = {}
