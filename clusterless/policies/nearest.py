@@ -40,7 +40,8 @@ def shortest_path(s, choices, coords, coordinates, mem):
             # print(f"move: {first_cell-coords}")
             # print(f"og set: {og_first_moves}")
             # print(d)
-            return first_cell-coords
+            proposed_move = first_cell-coords
+            return np.where(proposed_move == 1-s.size, 1, (np.where(proposed_move == s.size-1, -1, proposed_move)))
         neighbors = (cell + action_space) % s.size
         for neighbor in neighbors:
             n = tuple(neighbor)

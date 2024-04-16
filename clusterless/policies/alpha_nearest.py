@@ -2,7 +2,6 @@ import numpy as np
 from collections import deque
 
 action_space = np.array([[0, 1], [1, 0], [-1, 0], [0, -1]])
-alpha = 3
 
 
 def alpha_nearest(s, n_agents, sense_info, coordinates):
@@ -15,19 +14,20 @@ def alpha_nearest(s, n_agents, sense_info, coordinates):
             alpha*(D(v)-D(w))<I(w)-I(v)
         First Order Simplifications:
             We assume P(G(v)) is either 1 (goal seen at cell v) or the goal generation probability aka s.probs['goal']'''
-    s.probs['goal']
     actions = np.zeros(shape=(n_agents,2),dtype=np.int32)
     for i, (c, view, mem, coords) in enumerate(sense_info):
         goals = mem.grid == s.codes['goal']
         goals = goals.astype(float)
         unexplored = mem.grid == s.codes['unseen']
-        unexplored = 0.1* unexplored.astype(float)
+        unexplored = s.probs['goal']* unexplored.astype(float)
         possible_targets = (unexplored+goals).reshape((np.prod((s.size,s.size))),)
+        print(f"checking for {c}")
         move = shortest_path_alpha(s, possible_targets, coords, coordinates, mem)
         actions[i,:]=move
     return actions
 
 def shortest_path_alpha(s, probabilities, coords, coordinates, mem):
+    alpha = s.alpha
     d = deque()
     visited = set() 
     obstacles = np.logical_or(mem.grid == s.codes['obstacle'],mem.grid == s.codes['dead'])
@@ -53,7 +53,8 @@ def shortest_path_alpha(s, probabilities, coords, coordinates, mem):
         if probability > 0:
             heuristic = -np.log10(probability)+alpha*path_length
             if heuristic < best[1]:
-                best = [first_cell-coords,heuristic,path_length]
+                proposed_move = first_cell-coords
+                best = [np.where(proposed_move == 1-s.size, 1, (np.where(proposed_move == s.size-1, -1, proposed_move))),heuristic,path_length]
         neighbors = (cell + action_space) % s.size
         for neighbor in neighbors:
             n = tuple(neighbor)
@@ -67,4 +68,7 @@ def shortest_path_alpha(s, probabilities, coords, coordinates, mem):
         # if we know we can never possibly find anything better than the current v, stop and return v's first move
         # we know this when alpha*current extra search distance is equal or greater to I(v)
         if alpha*(path_length-best[2])>=best[1]: break
+    # print(f"best final: {best[0]}")
+    # if len(possible_first_moves) ==1 and (list(possible_first_moves.keys())[0]-coords != best[0]).all():
+    #     print(f"issue: {best[0]} is not {list(possible_first_moves.keys())[0]-coords}")
     return best[0]
