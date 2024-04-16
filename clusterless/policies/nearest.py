@@ -32,7 +32,6 @@ def shortest_path(s, choices, coords, mem):
         possible_first_moves[tuple(first_cell)]-=1
         cell_tuple = tuple(cell)
         first_cell_tuple = tuple(first_cell)
-        visited.add(cell_tuple)
         if cell_tuple in choices:
             # print(f"going towards {cell_tuple}")
             # print(f"p0: {coords}, p1: {first_cell}")
@@ -47,6 +46,7 @@ def shortest_path(s, choices, coords, mem):
             if n not in visited and n not in illegal:
                 d.append((neighbor, first_cell))
                 possible_first_moves[first_cell_tuple]+=1
+                visited.add(cell_tuple)
         if possible_first_moves[first_cell_tuple] == 0: 
             del possible_first_moves[first_cell_tuple]
         if len(possible_first_moves) == 1:

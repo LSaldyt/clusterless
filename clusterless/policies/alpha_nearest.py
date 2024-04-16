@@ -1,5 +1,6 @@
 import numpy as np
 from collections import deque
+from functools import reduce
 
 action_space = np.array([[0, 1], [1, 0], [-1, 0], [0, -1]])
 
@@ -31,12 +32,12 @@ def alpha_nearest(map, sense_info, base_policy, s):
 def shortest_path_alpha(s, probabilities, coords, coordinates, mem):
     alpha = s.alpha
     d = deque()
-    visited = set() 
+    visited = set()
     obstacles = np.logical_or(mem.map.grid == s.codes['obstacle'],mem.map.grid == s.codes['dead'])
     illegal = coordinates[obstacles.reshape((np.prod((s.size,s.size)),))]
     illegal = {tuple(illegal[i,:]) for i in range(illegal.shape[0])}
     possible_first_moves = {}
-    best = [np.array([0,0],dtype=np.int32), np.inf,np.inf]
+    best = [np.array([0,0],dtype=np.int32), np.inf,np.inf,np.inf]
     for action in action_space:
         poss_first_move = (coords+action)%s.size
         if tuple(poss_first_move) not in illegal:
@@ -44,34 +45,37 @@ def shortest_path_alpha(s, probabilities, coords, coordinates, mem):
             possible_first_moves[tuple(poss_first_move)] = 1
     visited.add(tuple(coords))
     choices = {tuple(coordinates[i,:]): probabilities[i] for i in range(coordinates.shape[0])}
+    max_probability = reduce(lambda x,v: max(x,v), choices.values(), 0)
     while len(d)>0:
         cell, first_cell, path_length = d.popleft()
         path_length+=1
         possible_first_moves[tuple(first_cell)]-=1
         cell_tuple = tuple(cell)
+        if cell_tuple in visited: continue
         first_cell_tuple = tuple(first_cell)
-        visited.add(cell_tuple)
         probability = choices[cell_tuple]
         if probability > 0:
-            heuristic = -np.log10(probability)+alpha*path_length
+            surprisal = -np.log10(probability)
+            heuristic = surprisal+alpha*path_length
             if heuristic < best[1]:
                 proposed_move = first_cell-coords
-                best = [np.where(proposed_move == 1-s.size, 1, (np.where(proposed_move == s.size-1, -1, proposed_move))),heuristic,path_length]
+                best = [np.where(proposed_move == 1-s.size, 1, (np.where(proposed_move == s.size-1, -1, proposed_move))),heuristic,path_length, surprisal]
+                # quick quit if there will be no higher prob later 
+                if probability >= max_probability: break
+        # if we know we can never possibly find anything better than the current v, stop and return v's first move
+        # we know this when alpha*current extra search distance is equal or greater to I(v)
+        if alpha*(path_length-best[2])>=best[3]:
+            break
         neighbors = (cell + action_space) % s.size
         for neighbor in neighbors:
             n = tuple(neighbor)
             if n not in visited and n not in illegal:
                 d.append((neighbor, first_cell, path_length))
                 possible_first_moves[first_cell_tuple]+=1
+                visited.add(cell_tuple)
         if possible_first_moves[first_cell_tuple] == 0: 
             del possible_first_moves[first_cell_tuple]
         if len(possible_first_moves) == 1:
             proposed_move = list(possible_first_moves.keys())[0]-coords 
             return np.where(proposed_move == 1-s.size, 1, (np.where(proposed_move == s.size-1, -1, proposed_move)))
-        # if we know we can never possibly find anything better than the current v, stop and return v's first move
-        # we know this when alpha*current extra search distance is equal or greater to I(v)
-        if alpha*(path_length-best[2])>=best[1]: break
-    # print(f"best final: {best[0]}")
-    # if len(possible_first_moves) ==1 and (list(possible_first_moves.keys())[0]-coords != best[0]).all():
-    #     print(f"issue: {best[0]} is not {list(possible_first_moves.keys())[0]-coords}")
     return best[0]
