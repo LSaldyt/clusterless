@@ -23,7 +23,12 @@ def define_experiments(registry):
         base_policy='nearest',
         do_render=True,
 
-        action_space = np.array([[0, 0], [0, 1], [1, 0], [-1, 0], [0, -1]])
+        obstacle_cost=0.1, # Just some bruises
+        death_cost=10.0,   # One death is worth ten goals, arbitrarily. Our agents are cheap.
+
+        view_type='circle',
+
+        action_space = np.array([[0, 1], [1, 0], [-1, 0], [0, -1], [0, 0]])
         )
     s.update(codes={
                  **{k : i for i, k in enumerate(s.probs.keys())},
