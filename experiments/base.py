@@ -12,9 +12,9 @@ def define_experiments(registry):
         Last two symbols are reserved (unseen, dead agent)
         All symbols inbetween are used for agent codes '''
     s = registry.shared.derive(
-        symbols = '·□★' + 'ζξΞѯƔȣ☭' + '♔♕♖♗♘♙♚♛♜♝♞♟' + string.ascii_lowercase + string.ascii_uppercase + '?☠',
+        symbols = '·□★' + ('ζξΞѯƔȣ☭' + '♔♕♖♗♘♙♚♛♜♝♞♟' + string.ascii_lowercase + string.ascii_uppercase)*20 + '?☠',
         gen     = np.random.default_rng(2024),
-        probs   = dict(empty=0.5, obstacle=0.35, goal=0.1, agent=0.05), # Order matters! Agents come last
+        probs   = dict(empty=0.54, obstacle=0.35, goal=0.1, agent=0.01), # Order matters! Agents come last
         timesteps = 128,
         environment_samples=128,
         view_size=3,
