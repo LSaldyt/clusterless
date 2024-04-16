@@ -42,7 +42,11 @@ class Map():
         self.cache          = dict()
         self._dont_deepcopy = {'coords', 'settings'} # Only deepcopy self.grid!
 
-    def full_render(self, sense_input, s):
+    def clone(self):
+        return deepcopy(self)
+
+    def full_render(self, sense_input):
+        s = self.settings
         rendered_views = [(' ' * s.view_size + '\n') * s.view_size]
         rendered_grids = [render(self.grid, s.symbols)]
         codes          = []
@@ -54,6 +58,9 @@ class Map():
         print(utils.horizontal_join(rendered_grids))
         print(utils.horizontal_join(descriptions))
         print(utils.horizontal_join(rendered_views, join=' ' * (s.size - s.view_size + 1)))
+
+    def render_grid(self):
+        print(render(self.grid, self.settings.symbols))
 
     def set_at(self, coords, values):
         ''' Set grid by vectorized coordinates to new values 
@@ -101,5 +108,7 @@ class Map():
         for k, v in self.__dict__.items():
             if k not in self._dont_deepcopy:
                 setattr(result, k, deepcopy(v, memo))
+            else:
+                setattr(result, k, v)
         return result
 

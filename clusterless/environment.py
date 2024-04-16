@@ -1,4 +1,7 @@
 import numpy as np
+from collections import Counter
+from functools import reduce
+import operator
 
 from . import utils
 from .map import Map
@@ -41,29 +44,33 @@ def transition(map, actions, s):
         n_collisions_agents   = np.sum(unique_counts) - unique_counts.shape[0],
     )
 
-def simulate(map, policy, base_policy, s): 
+def simulate(env_map, policy, base_policy, timesteps, s, check_goals=True): 
     score   = 0 # Number of goals achieved
-    n_goals = map.count('goal')
-    memory  = init_memory(map, s)
+    n_goals = env_map.count('goal')
+    memory  = init_memory(env_map, s)
 
-    step_count = s.timesteps
-    for t in range(s.timesteps):
-        sense_input = list(sense_environment(map, memory, s, t))
+    cumulative = Counter(n_goals_achieved=0, n_collisions_obstacle=0, n_collisions_agents=0)
+
+    step_count = timesteps
+    for t in range(timesteps):
+        sense_input = list(sense_environment(env_map, memory, s, t))
 
         if s.do_render:
-            map.full_render(sense_input, s)
+            env_map.full_render(sense_input)
 
-        actions = policy(map, sense_input, base_policy, s)
-        info    = transition(map, actions, s) # Important: Do transition at the end of the loop
+        actions = policy(env_map, sense_input, base_policy, s)
+        info    = transition(env_map, actions, s) # Important: Do transition at the end of the loop
+
+        cumulative = {k : cumulative[k] + vn for k, vn in info.items()}
 
         score += info['n_goals_achieved']
-        info.update(score=score, n_goals=n_goals)
-        remaining_goals = map.count('goal')
+        remaining_goals = env_map.count('goal')
         if s.do_render:
             print(f'Step {t} {info}')
-        if remaining_goals == 0 or map.agents_info.n_agents == 0:
-            sense_input = list(sense_environment(map, memory, s, t))
-            step_count = t if remaining_goals==0 else s.timesteps
+        if ((check_goals and remaining_goals == 0) 
+            or env_map.agents_info.n_agents == 0):
+            sense_input = list(sense_environment(env_map, memory, s, t))
+            step_count = t if remaining_goals==0 else timesteps
             break
     assert score <= n_goals
-    return dict(score=score, percent=score/n_goals, step_count=step_count)
+    return dict(score=score, percent=score/n_goals, step_count=step_count, **dict(cumulative))

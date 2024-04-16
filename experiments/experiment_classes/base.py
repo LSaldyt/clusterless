@@ -13,6 +13,6 @@ class BaseExperiment(Experiment):
                  for i_r in range(s.environment_samples)]
 
         for i_r, map in maps:
-            stats = simulate(map, policy, base_policy, s)
+            stats = simulate(map, policy, base_policy, s.timesteps, s)
             stats.update(environment_index=i_r)
             self.log(f'summary', stats)
