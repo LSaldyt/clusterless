@@ -23,7 +23,7 @@ def alpha_nearest(map, sense_info, base_policy, s):
         unexplored = mem.map.grid == s.codes['unseen']
         unexplored = s.probs['goal']* unexplored.astype(float)
         possible_targets = (unexplored+goals).reshape((np.prod((s.size,s.size))),)
-        print(f"checking for {c}")
+        # print(f"checking for {c}")
         move = shortest_path_alpha(s, possible_targets, coords, map.coords, mem)
         actions[i,:]=move
     return actions
@@ -66,7 +66,8 @@ def shortest_path_alpha(s, probabilities, coords, coordinates, mem):
         if possible_first_moves[first_cell_tuple] == 0: 
             del possible_first_moves[first_cell_tuple]
         if len(possible_first_moves) == 1:
-            return list(possible_first_moves.keys())[0]-coords
+            proposed_move = list(possible_first_moves.keys())[0]-coords 
+            return np.where(proposed_move == 1-s.size, 1, (np.where(proposed_move == s.size-1, -1, proposed_move)))
         # if we know we can never possibly find anything better than the current v, stop and return v's first move
         # we know this when alpha*current extra search distance is equal or greater to I(v)
         if alpha*(path_length-best[2])>=best[1]: break

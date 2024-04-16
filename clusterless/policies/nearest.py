@@ -50,5 +50,6 @@ def shortest_path(s, choices, coords, mem):
         if possible_first_moves[first_cell_tuple] == 0: 
             del possible_first_moves[first_cell_tuple]
         if len(possible_first_moves) == 1:
-            return list(possible_first_moves.keys())[0]-coords 
+            proposed_move = list(possible_first_moves.keys())[0]-coords 
+            return np.where(proposed_move == 1-s.size, 1, (np.where(proposed_move == s.size-1, -1, proposed_move)))
     return np.array([0,0],dtype=np.int32)
