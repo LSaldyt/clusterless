@@ -50,14 +50,14 @@ class Map():
         rendered_views = [(' ' * s.view_size + '\n') * s.view_size]
         rendered_grids = [render(self.grid, s.symbols)]
         codes          = []
-        for c, view, mem, coords in sense_input:
-            rendered_views.append(render(view,         s.symbols))
+        for c, mem, coords in sense_input:
+            # rendered_views.append(render(view,         s.symbols))
             rendered_grids.append(render(mem.map.grid, s.symbols))
             codes.append(f'agent {s.symbols[c]}')
         descriptions   = [f'{name:<{s.size}}\n' for name in ['full'] + codes]
         print(utils.horizontal_join(rendered_grids))
         print(utils.horizontal_join(descriptions))
-        print(utils.horizontal_join(rendered_views, join=' ' * (s.size - s.view_size + 1)))
+        # print(utils.horizontal_join(rendered_views, join=' ' * (s.size - s.view_size + 1)))
 
     def render_grid(self):
         print(render(self.grid, self.settings.symbols))

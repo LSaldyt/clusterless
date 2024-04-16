@@ -6,7 +6,7 @@ action_space = np.array([[0, 1], [1, 0], [-1, 0], [0, -1]])
 def nearest(map, sense_info, base_policy, s):
     a_info  = map.agents_info
     actions = np.zeros(shape=(a_info.n_agents, 2), dtype=np.int32)
-    for i, (c, view, mem, coords) in enumerate(sense_info):
+    for i, (c, mem, coords) in enumerate(sense_info):
         targets       = mem.map.mask('goal', 'unseen')
         target_coords = mem.map.coords_of(targets)
         move          = shortest_path(s, target_coords, coords, mem)
