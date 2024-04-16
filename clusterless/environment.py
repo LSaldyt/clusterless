@@ -14,6 +14,7 @@ def transition(map, actions, s):
         Agents cannot collide.. or they die? ☠'''
     a_info = map.agents_info
     # Progress actions, (optionally) enforce map boundaries
+    assert (np.sum(np.abs(actions),axis=1)<=1).all()
     next_coords    = (a_info.coords + actions) 
     next_coords    = next_coords % (map.grid.shape[0])
     next_locations = map.grid[next_coords[:, 0], next_coords[:, 1]]
