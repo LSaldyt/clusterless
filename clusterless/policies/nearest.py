@@ -6,19 +6,17 @@ action_space = np.array([[0, 1], [1, 0], [-1, 0], [0, -1]])
 def nearest(s, n_agents, sense_info, coordinates):
     actions = np.zeros(shape=(n_agents,2),dtype=np.int32)
     for i, (c, view, mem, coords) in enumerate(sense_info):
-        goals = mem.grid == s.codes['goal']
-        unexplored = mem.grid == s.codes['unseen']
-        possible_targets = goals | unexplored
-        possible_coordinates = coordinates[possible_targets.reshape((np.prod((s.size,s.size)),))]
-        move = shortest_path(s, possible_coordinates, coords, coordinates, mem)
+        targets       = mem.map.mask('goal', 'unseen')
+        target_coords = mem.map.coords_of(targets)
+        move = shortest_path(s, target_coords, coords, coordinates, mem)
         actions[i,:]=move
     return actions
 
 def shortest_path(s, choices, coords, coordinates, mem):
     d = deque()
     visited = set() 
-    obstacles = np.logical_or(mem.grid == s.codes['obstacle'],mem.grid == s.codes['dead'])
-    illegal = coordinates[obstacles.reshape((np.prod((s.size,s.size)),))]
+    obstacles = mem.map.mask('obstacle', 'dead')
+    illegal   = mem.map.coords_of(obstacles)
     illegal = {tuple(illegal[i,:]) for i in range(illegal.shape[0])}
     possible_first_moves = {}
     for action in action_space:
