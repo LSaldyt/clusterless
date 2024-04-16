@@ -58,6 +58,8 @@ def simulate(map, policy, base_policy, s, do_render=False):
         score += info['n_goals_achieved']
         info.update(score=score, n_goals=n_goals)
         remaining_goals = map.count('goal')
+        if do_render:
+            print(f'Step {t} {info}')
         if remaining_goals == 0 or map.agents_info.n_agents == 0:
             sense_input = list(sense_environment(map, memory, s, t))
             step_count = t if remaining_goals==0 else s.timesteps
