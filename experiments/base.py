@@ -20,6 +20,7 @@ def define_experiments(registry):
         view_size=3,
         policy='rollout',
         base_policy='nearest',
+        do_render=True,
 
         action_space = np.array([[0, 0], [0, 1], [1, 0], [-1, 0], [0, -1]])
         )

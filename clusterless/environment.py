@@ -40,7 +40,7 @@ def transition(map, actions, s):
         n_collisions_agents   = np.sum(unique_counts) - unique_counts.shape[0],
     )
 
-def simulate(map, policy, base_policy, s, do_render=False): 
+def simulate(map, policy, base_policy, s): 
     score   = 0 # Number of goals achieved
     n_goals = map.count('goal')
     memory  = init_memory(map, s)
@@ -49,7 +49,7 @@ def simulate(map, policy, base_policy, s, do_render=False):
     for t in range(s.timesteps):
         sense_input = list(sense_environment(map, memory, s, t))
 
-        if do_render:
+        if s.do_render:
             map.full_render(sense_input, s)
 
         actions = policy(map, sense_input, base_policy, s)
@@ -58,7 +58,7 @@ def simulate(map, policy, base_policy, s, do_render=False):
         score += info['n_goals_achieved']
         info.update(score=score, n_goals=n_goals)
         remaining_goals = map.count('goal')
-        if do_render:
+        if s.do_render:
             print(f'Step {t} {info}')
         if remaining_goals == 0 or map.agents_info.n_agents == 0:
             sense_input = list(sense_environment(map, memory, s, t))
