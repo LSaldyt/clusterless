@@ -3,10 +3,11 @@ import numpy.typing as npt
 from dataclasses import dataclass
 
 from . import utils
+from .map import Map
 
 @dataclass
 class Memory():
-    grid : npt.ArrayLike
+    map  : Map
     time : npt.ArrayLike
 
 ''' Memory is a series of views over time 
@@ -26,16 +27,19 @@ def views(map, agent_coords, s):
         view           = map.grid[view_coords[:, 0], view_coords[:, 1]]
         yield agent_coords[i, :], view_coords, view.reshape((s.view_size, s.view_size))
 
-def init_memory(map, agent_codes, codes):
-    return {k : Memory(np.full(map.grid.shape, codes['unseen']), 
+def init_memory(map, agent_codes, s):
+    return {k : Memory(Map(s, np.full(map.grid.shape, s.codes['unseen'])), 
                        np.full(map.grid.shape, 0)) 
             for k in agent_codes}
 
 def sense_environment(map, memory, agent_codes, agent_coords, s, timestep):
-    for c, (ac, view_coords, view) in zip(agent_codes, views(map, agent_coords, s)): # Important: views should be taken before transitions for consistency
-        memory[c].grid[view_coords[:, 0], view_coords[:, 1]] = view.ravel() 
-        memory[c].time[view_coords[:, 0], view_coords[:, 1]] = timestep
+    for c, (ac, view_coords, view) in zip(agent_codes, views(map, agent_coords, s)): 
+        memory[c].map.grid[view_coords[:, 0], view_coords[:, 1]] = view.ravel() 
+        memory[c].time[    view_coords[:, 0], view_coords[:, 1]] = timestep
         yield c, view, memory[c], ac
 
 def merge_memory(mem_a, mem_b):
-    return np.where(mem_a.time < mem_b.time, mem_a.grid, mem_b.grid)
+    recent   = mem_a.time < mem_b.time
+    new_grid = np.where(recent, mem_a.map.grid, mem_b.map.grid)
+    new_time = np.where(recent, mem_a.time,     mem_b.time)
+    return Memory(Map(new_grid), new_time)

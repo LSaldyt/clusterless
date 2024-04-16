@@ -51,7 +51,7 @@ def simulate(map, policy, s, do_render=False):
     n_goals = map.count('goal')
 
     agent_codes, agent_coords, n_agents = get_agents(map, s)
-    memory = init_memory(map, agent_codes, s.codes)
+    memory = init_memory(map, agent_codes, s)
 
     step_count = s.timesteps
     for t in range(s.timesteps):

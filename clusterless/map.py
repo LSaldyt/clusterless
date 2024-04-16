@@ -21,16 +21,18 @@ class Map():
     coords   : npt.ArrayLike
     settings : Settings
 
-    def __init__(self, s):
+    def __init__(self, s, initial_grid=None):
         ''' Create an initial environment from a multinomial distribution '''
-        grid_shape = (s.size, s.size)
-        self.grid  = s.gen.choice(np.arange(len(s.probs)), size=grid_shape, p=list(s.probs.values()))
-        # Re-assign agents to unique numbers, e.g. [3, 3, 3] becomes [3, 4, 5]
-        mask = self.grid == s.codes['agent']
-        size = grid_shape[0]
+        if initial_grid is None:
+            grid_shape = (s.size, s.size)
+            self.grid  = s.gen.choice(np.arange(len(s.probs)), size=grid_shape, p=list(s.probs.values()))
+            # Re-assign agents to unique numbers, e.g. [3, 3, 3] becomes [3, 4, 5]
+            mask = self.grid == s.codes['agent']
+            self.grid[mask] = (np.arange(np.sum(mask)) + s.codes['agent'])
+        else:
+            self.grid = initial_grid # type: ignore
 
-        self.grid[mask]     = (np.arange(np.sum(mask)) + s.codes['agent'])
-        self.coordinates    = utils.cartesian_product(np.arange(size), np.arange(size))
+        self.coordinates    = utils.cartesian_product(np.arange(s.size), np.arange(s.size))
         self.settings       = s
         self._dont_deepcopy = {'coordinates', 'settings'} # Only deepcopy self.grid!
 
@@ -39,8 +41,8 @@ class Map():
         rendered_grids = [render(self.grid, s.symbols)]
         codes          = []
         for c, view, mem, coords in sense_input:
-            rendered_views.append(render(view,     s.symbols))
-            rendered_grids.append(render(mem.grid, s.symbols))
+            rendered_views.append(render(view,         s.symbols))
+            rendered_grids.append(render(mem.map.grid, s.symbols))
             codes.append(f'agent {s.symbols[c]}')
         descriptions   = [f'{name:<{s.size}}\n' for name in ['full'] + codes]
         print(utils.horizontal_join(rendered_grids))
@@ -60,7 +62,8 @@ class Map():
         return comb(*(self.grid == self.settings.codes[k] for k in keys))
 
     def count(self, *keys):
-        return np.sum(self.mask(*keys)) # type: ignore
+        mask = self.mask(*keys)
+        return np.sum(mask) # type: ignore
 
     def __copy__(self):
         cls = self.__class__
