@@ -5,13 +5,9 @@ from clusterless.policies import available_policies
 import string
 import numpy as np
 
-def define_experiments(registry):
-    # Default/common experiment settings
-    ''' For symbols: 
-        First three symbols are reserved (empty, obstacle, goal)
-        Last two symbols are reserved (unseen, dead agent)
-        All symbols inbetween are used for agent codes '''
-    s = registry.shared.derive(
+def defaults(shared):
+    s = shared.derive(
+        size=8,
         symbols = '·□★' + ('ζξΞѯƔȣ☭' + '♔♕♖♗♘♙♚♛♜♝♞♟' + string.ascii_lowercase + string.ascii_uppercase)*20 + '?☠',
         gen     = np.random.default_rng(2024),
         probs   = dict(empty=0.54, obstacle=0.35, goal=0.1, agent=0.01), # Order matters! Agents come last
@@ -23,18 +19,27 @@ def define_experiments(registry):
         base_policy='nearest',
         do_render=True,
 
-        obstacle_cost=0.1, # Just some bruises
-        death_cost=10.0,   # One death is worth ten goals, arbitrarily. Our agents are cheap.
+        # obstacle_cost=0.1, # Just some bruises
+        obstacle_cost=50.0, # Just some bruises
+        death_cost=100.0,   # One death is worth ten goals, arbitrarily. Our agents are cheap.
 
         view_type='circle',
 
-        action_space = np.array([[0, 1], [1, 0], [-1, 0], [0, -1], [0, 0]])
+        action_space = np.array([[-1, 0], [1, 0], [0, -1], [0, 1], [0, 0]])
         )
     s.update(codes={
                  **{k : i for i, k in enumerate(s.probs.keys())},
                  **{'dead'      : -1,
                     'unseen'    : -2}})
+    return s
 
+def define_experiments(registry):
+    # Default/common experiment settings
+    ''' For symbols: 
+        First three symbols are reserved (empty, obstacle, goal)
+        Last two symbols are reserved (unseen, dead agent)
+        All symbols inbetween are used for agent codes '''
+    s = defaults(registry.shared)
     sizes = [8, 16, 32]
     return [BaseExperiment(f'env_{size}', s.derive(size=size))
             for size in sizes]
