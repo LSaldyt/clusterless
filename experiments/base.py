@@ -11,7 +11,11 @@ def defaults(shared):
         symbols = '·□★' + ('ζξΞѯƔȣ☭' + '♔♕♖♗♘♙♚♛♜♝♞♟' + string.ascii_lowercase + string.ascii_uppercase)*20 + '?☠',
         gen     = np.random.default_rng(2024),
         # probs   = dict(empty=0.54, obstacle=0.35, goal=0.1, agent=0.01), # Order matters! Agents come last
-        probs   = dict(empty=0.54 + .35, obstacle=0.0, goal=0.1, agent=0.01), # Order matters! Agents come last
+        # probs   = dict(empty=0.54, obstacle=0.35, goal=0.1, agent=0.01), # Order matters! Agents come last
+        # probs   = dict(empty=0.54 + .35, obstacle=0.0, goal=0.1, agent=0.01), # Order matters! Agents come last
+        probs   = dict(empty=0.53, obstacle=0.25, goal=0.2, agent=0.02), # Order matters! Agents come last
+        selected_env=-1,
+        discount=0.95,
         truncated_timesteps=16,
         timesteps = 128,
         environment_samples=8,
@@ -20,9 +24,8 @@ def defaults(shared):
         base_policy='nearest',
         do_render=True,
 
-        # obstacle_cost=0.1, # Just some bruises
-        obstacle_cost=50.0, # Just some bruises
-        death_cost=100.0,   # One death is worth ten goals, arbitrarily. Our agents are cheap.
+        obstacle_cost=1.0, # Just some bruises
+        death_cost=10.0,   # One death is worth ten goals, arbitrarily. Our agents are cheap.
 
         view_type='circle',
 

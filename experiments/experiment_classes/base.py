@@ -13,6 +13,12 @@ class BaseExperiment(Experiment):
                  for i_r in range(s.environment_samples)]
 
         for i_r, map in maps:
-            stats = simulate(map, policy, base_policy, s.timesteps, s, do_render=s.do_render)
+            if s.selected_env != -1:
+                if i_r != s.selected_env:
+                    continue
+            if map.agents_info.n_agents != 1:
+                continue
+            stats = simulate(map, policy, base_policy, s.timesteps, i_r, s, do_render=s.do_render)
+            print(i_r)
             stats.update(environment_index=i_r)
             self.log(f'summary', stats)

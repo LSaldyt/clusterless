@@ -23,5 +23,5 @@ def run(exp='env_8', **kwargs):
         exit()
     print(stamp)
     df = pd.read_csv(stamp / 'data/summary.csv')
-    print(df)
+    # print(df)
     print(df.describe())
