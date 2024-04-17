@@ -7,6 +7,9 @@ from . import utils
 from .map import Map
 from .memory import init_memory, sense_environment
 
+class CircularBehaviorException(RuntimeError):
+    pass
+
 def transition(map, actions, s):
     ''' Note: This function MODIFIES map intentionally, for efficiency.
 
@@ -49,6 +52,8 @@ def simulate(env_map, policy, base_policy, timesteps, env_index, s, do_render=Fa
     n_goals = env_map.count('goal')
     memory  = init_memory(env_map, s)
 
+    unique_maps = set()
+
     cumulative = Counter(n_goals_achieved=0, n_collisions_obstacle=0, n_collisions_agents=0)
 
     step_count = timesteps
@@ -61,12 +66,19 @@ def simulate(env_map, policy, base_policy, timesteps, env_index, s, do_render=Fa
         actions = policy(env_map, sense_input, base_policy, t, s)
         info    = transition(env_map, actions, s) # Important: Do transition at the end of the loop
 
+        env_hash = env_map.hash()
+        if env_hash not in unique_maps:
+            unique_maps.add(env_hash)
+        else:
+            env_map.full_render(sense_input)
+            raise CircularBehaviorException(f'Circular behavior detected!!')
+
         cumulative = {k : cumulative[k] + vn for k, vn in info.items()}
 
         score += info['n_goals_achieved'] * (s.discount)**(t)
         remaining_goals = env_map.count('goal')
         if do_render:
-            print(f'Step {t} {info} {env_index}')
+            print(f'Step {t} {info} env = {env_index}')
         if ((check_goals and remaining_goals == 0) 
             or env_map.agents_info.n_agents == 0):
             sense_input = list(sense_environment(env_map, memory, s, t))

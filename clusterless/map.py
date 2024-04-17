@@ -2,6 +2,7 @@ import numpy as np
 import numpy.typing as npt
 from copy import deepcopy
 from collections import namedtuple
+import hashlib
 
 from science import Settings
 
@@ -92,6 +93,9 @@ class Map():
             n_agents = np.sum(mask)
             self.cache[key] = AgentsInfo(codes, coords, n_agents)
         return self.cache[key]
+
+    def hash(self):
+        return hashlib.md5(self.grid).hexdigest()
 
     def _inc_purity(self):
         self.purity += 1

@@ -26,34 +26,23 @@ def rollout_egocentric(mem, perfect_a_info, base_policy_actions, base_policy, ag
     future_actions = base_policy_actions[bp_indices]
     ego_i = np.argmax(a_info.codes == agent_code) # Our index
 
-    # print('future', future_actions)
     for j, action in enumerate(s.action_space):
         future_actions[ego_i, :] = action
-
-        # print('-' * 80)
-        # print('future', future_actions)
         next_map  = mem.map.clone()
         info      = transition(next_map, future_actions, s) # Modifies next_map
         info['score'] = info['n_goals_achieved']
         info['step_count'] = 1 # type: ignore
-        # next_map.render_grid()
-        # print(info)
         lookahead_miracle = next_map.count('goal') == 0
         rollout_timesteps = np.minimum(s.timesteps - t, s.truncated_timesteps)
-        # print(f'Rollout timesteps: {rollout_timesteps}')
         results   = simulate(next_map, base_policy, base_policy, rollout_timesteps,
                              0, s, do_render=False, check_goals=True)
         results   = {k : results.get(k, 0) + info.get(k, 0) for k in results}
         results['percent'] = results['score'] / mem.map.count('goal')
         if lookahead_miracle:
             results['step_count'] = results['step_count'] - 1
-        # print(results)
         immediate_coll = info['n_collisions_obstacle'] + info['n_collisions_agents']
         if immediate_coll > 0:
             values[j] = -np.infty
         else:
             values[j] = results['score'] / results['step_count']
-    print(values)
-    # print(s.action_space[np.argmax(values)])
-
     return s.action_space[np.argmax(values)]

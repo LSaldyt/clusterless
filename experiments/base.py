@@ -14,7 +14,7 @@ def defaults(shared):
         # probs   = dict(empty=0.54, obstacle=0.35, goal=0.1, agent=0.01), # Order matters! Agents come last
         # probs   = dict(empty=0.54 + .35, obstacle=0.0, goal=0.1, agent=0.01), # Order matters! Agents come last
         probs   = dict(empty=0.53, obstacle=0.25, goal=0.2, agent=0.02), # Order matters! Agents come last
-        selected_env=-1,
+
         discount=0.95,
         truncated_timesteps=16,
         timesteps = 128,
@@ -29,7 +29,12 @@ def defaults(shared):
 
         view_type='circle',
 
-        action_space = np.array([[-1, 0], [1, 0], [0, -1], [0, 1], [0, 0]])
+        action_space = np.array([[-1, 0], [1, 0], [0, -1], [0, 1], [0, 0]]),
+            
+        # Debugging/analysis options
+        selected_env=-1,
+        single_agent=False,
+
         )
     s.update(codes={
                  **{k : i for i, k in enumerate(s.probs.keys())},

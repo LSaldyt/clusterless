@@ -16,9 +16,8 @@ class BaseExperiment(Experiment):
             if s.selected_env != -1:
                 if i_r != s.selected_env:
                     continue
-            if map.agents_info.n_agents != 1:
+            if s.single_agent and map.agents_info.n_agents != 1:
                 continue
             stats = simulate(map, policy, base_policy, s.timesteps, i_r, s, do_render=s.do_render)
-            print(i_r)
             stats.update(environment_index=i_r)
             self.log(f'summary', stats)
