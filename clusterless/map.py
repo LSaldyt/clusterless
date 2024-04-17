@@ -43,7 +43,9 @@ class Map():
         self._dont_deepcopy = {'coords', 'settings'} # Only deepcopy self.grid!
 
     def clone(self):
-        return deepcopy(self)
+        child = deepcopy(self)
+        child._inc_purity()
+        return child
 
     def full_render(self, sense_input):
         s = self.settings

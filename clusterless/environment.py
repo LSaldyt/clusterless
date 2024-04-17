@@ -11,7 +11,7 @@ def transition(map, actions, s):
     ''' Note: This function MODIFIES map intentionally, for efficiency.
 
         Move all agents at once according to their actions:
-        Agent actions can be stay, up, down, left, and right
+        Agent actions can choose: stay, up, down, left, and right
         If an agent touches a goal, that goal is achieved. 
         Agents cannot step into obstacles.. or they stay in place at a penalty 
         Agents cannot collide.. or they die? ☠'''
@@ -44,7 +44,7 @@ def transition(map, actions, s):
         n_collisions_agents   = np.sum(unique_counts) - unique_counts.shape[0],
     )
 
-def simulate(env_map, policy, base_policy, timesteps, s, check_goals=True): 
+def simulate(env_map, policy, base_policy, timesteps, s, do_render=False, check_goals=True): 
     score   = 0 # Number of goals achieved
     n_goals = env_map.count('goal')
     memory  = init_memory(env_map, s)
@@ -55,7 +55,7 @@ def simulate(env_map, policy, base_policy, timesteps, s, check_goals=True):
     for t in range(timesteps):
         sense_input = list(sense_environment(env_map, memory, s, t))
 
-        if s.do_render:
+        if do_render:
             env_map.full_render(sense_input)
 
         actions = policy(env_map, sense_input, base_policy, s)
@@ -65,7 +65,7 @@ def simulate(env_map, policy, base_policy, timesteps, s, check_goals=True):
 
         score += info['n_goals_achieved']
         remaining_goals = env_map.count('goal')
-        if s.do_render:
+        if do_render:
             print(f'Step {t} {info}')
         if ((check_goals and remaining_goals == 0) 
             or env_map.agents_info.n_agents == 0):

@@ -24,19 +24,30 @@ def rollout_egocentric(mem, perfect_a_info, base_policy_actions, base_policy, ag
     bp_indices = [np.argmax(perfect_a_info.codes == code)
                   for code in a_info.codes]
     future_actions = base_policy_actions[bp_indices]
-    ego_index      = np.argmax(a_info.codes == agent_code) # Our index
+    ego_i = np.argmax(a_info.codes == agent_code) # Our index
 
+    # print('future', future_actions)
     for j, action in enumerate(s.action_space):
-        future_actions[ego_index, :] = action
+        future_actions[ego_i, :] = action
 
-        next_map = mem.map.clone()
+        print('-' * 80)
+        print('future', future_actions)
+        next_map  = mem.map.clone()
         info      = transition(next_map, future_actions, s) # Modifies next_map
-
+        next_map.render_grid()
+        print(info)
         results   = simulate(next_map, base_policy, base_policy, 
-                             s.truncated_timesteps, s, check_goals=False)
+                             s.truncated_timesteps, s, do_render=False, check_goals=False)
         results   = {k : results.get(k, 0) + info.get(k, 0) for k in results}
-        values[j] = (results['score'] 
-                     - s.obstacle_cost * results['n_collisions_obstacle']
-                     - s.death_cost    * results['n_collisions_agents'])
+        immediate_coll = info['n_collisions_obstacle'] + info['n_collisions_agents']
+        if immediate_coll > 0:
+            values[j] = -np.infty
+        else:
+            values[j] = results['score'] 
+        print(values[j], action)
+        print('-' * 80)
+    # print(s.action_space)
+    print(values)
+    print(s.action_space[np.argmax(values)])
 
     return s.action_space[np.argmax(values)]

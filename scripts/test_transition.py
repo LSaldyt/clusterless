@@ -20,8 +20,10 @@ def run():
     env_map.render_grid()
 
     for action, desc in zip(s.action_space, ('up', 'down', 'left', 'right', 'stay')):
+        print('-' * 80)
         print(action, desc, '?')
         copy_env_map = env_map.clone()
         info = transition(copy_env_map, np.expand_dims(action, 0), s)
         copy_env_map.render_grid()
         print(info)
+        print('-' * 80)
