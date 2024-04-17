@@ -30,6 +30,7 @@ def defaults(shared):
         view_type='circle',
 
         action_space = np.array([[-1, 0], [1, 0], [0, -1], [0, 1], [0, 0]]),
+        action_words = ('up', 'down', 'left', 'right', 'stay'),
             
         # Debugging/analysis options
         selected_env=-1,
@@ -37,6 +38,7 @@ def defaults(shared):
 
         debug=False,
         debug_trace_depth=4,
+        debug_alt_nearest=True,
         detect_cycles=True,
 
         )
