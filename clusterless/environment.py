@@ -21,6 +21,7 @@ def transition(map, actions, s):
     a_info = map.agents_info
     # Progress actions, (optionally) enforce map boundaries
     assert (np.sum(np.abs(actions),axis=1)<=1).all()
+    assert actions.shape == a_info.coords.shape, f'Future actions must match existing agent count, {a_info.coords.shape}, {actions.shape}'
     next_coords    = (a_info.coords + actions) 
     next_coords    = next_coords % (map.grid.shape[0])
     next_locations = map.grid[next_coords[:, 0], next_coords[:, 1]]
@@ -59,7 +60,7 @@ def detect_cycles(env_hash, unique_maps, trace, do_render, policy, s):
         exit()
         raise CircularBehaviorException(f'Circular behavior detected!!')
 
-def simulate(env_map, policy, base_policy, timesteps, env_index, s, do_render=False, check_goals=True): 
+def simulate(env_map, policy, base_policy, timesteps, env_index, s, do_render=False, check_goals=True, check_cycles=True): 
     score   = 0 # Number of goals achieved
     score_d = 0 # Discounted score
     n_goals = env_map.count('goal')
@@ -77,15 +78,18 @@ def simulate(env_map, policy, base_policy, timesteps, env_index, s, do_render=Fa
         sense_input = list(sense_environment(env_map, memory, s, t))
 
         env_hash = env_map.hash()
-        if s.detect_cycles:
+        if s.detect_cycles and check_cycles: # So that cycles can be disabled globally AND locally
             detect_cycles(env_hash, unique_maps, trace, do_render, policy, s)
 
         if do_render:
             print(f'Environment hash: {env_hash}')
             env_map.full_render(sense_input)
 
-        actions = policy(env_map, sense_input, base_policy, t, s)
-        info    = transition(env_map, actions, s) # Important: Do transition at the end of the loop
+        try:
+            actions = policy(env_map, sense_input, base_policy, t, s)
+            info    = transition(env_map, actions, s) # Important: Do transition at the end of the loop
+        except utils.UnsolvableException:
+            break
 
         if s.debug:
             trace.append((actions, env_map.clone()))

@@ -1,6 +1,9 @@
 import functools, itertools
 import numpy as np
 
+class UnsolvableException(RuntimeError):
+    pass
+
 @functools.cache
 def box(size=3):
     assert size % 2 == 1, f'Odd-numbered box size required'
@@ -36,3 +39,4 @@ def horizontal_join(elements, join=' '):
     element_lines = (el.split('\n') for el in elements)
     rows = (join.join(row_items) for row_items in zip(*element_lines))
     return '\n'.join(rows)
+
