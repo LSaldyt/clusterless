@@ -70,7 +70,7 @@ def simulate(env_map, policy, base_policy, timesteps, s, do_render=False, check_
         if ((check_goals and remaining_goals == 0) 
             or env_map.agents_info.n_agents == 0):
             sense_input = list(sense_environment(env_map, memory, s, t))
-            step_count = t if remaining_goals==0 else timesteps
+            step_count  = t + 1 if remaining_goals == 0 else timesteps
             break
     assert score <= n_goals
     return dict(score=score, percent=score/n_goals, step_count=step_count, **dict(cumulative))

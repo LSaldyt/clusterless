@@ -34,16 +34,23 @@ def rollout_egocentric(mem, perfect_a_info, base_policy_actions, base_policy, ag
         print('future', future_actions)
         next_map  = mem.map.clone()
         info      = transition(next_map, future_actions, s) # Modifies next_map
+        info['score'] = info['n_goals_achieved']
+        info['step_count'] = 1 # type: ignore
         next_map.render_grid()
         print(info)
+        lookahead_miracle = next_map.count('goal') == 0
         results   = simulate(next_map, base_policy, base_policy, 
-                             s.truncated_timesteps, s, do_render=False, check_goals=False)
+                             s.truncated_timesteps, s, do_render=False, check_goals=True)
         results   = {k : results.get(k, 0) + info.get(k, 0) for k in results}
+        results['percent'] = results['score'] / mem.map.count('goal')
+        if lookahead_miracle:
+            results['step_count'] = results['step_count'] - 1
+        print(results)
         immediate_coll = info['n_collisions_obstacle'] + info['n_collisions_agents']
         if immediate_coll > 0:
             values[j] = -np.infty
         else:
-            values[j] = results['score'] 
+            values[j] = results['percent'] / results['step_count']
         print(values[j], action)
         print('-' * 80)
     # print(s.action_space)

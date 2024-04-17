@@ -10,7 +10,8 @@ def defaults(shared):
         size=8,
         symbols = '·□★' + ('ζξΞѯƔȣ☭' + '♔♕♖♗♘♙♚♛♜♝♞♟' + string.ascii_lowercase + string.ascii_uppercase)*20 + '?☠',
         gen     = np.random.default_rng(2024),
-        probs   = dict(empty=0.54, obstacle=0.35, goal=0.1, agent=0.01), # Order matters! Agents come last
+        # probs   = dict(empty=0.54, obstacle=0.35, goal=0.1, agent=0.01), # Order matters! Agents come last
+        probs   = dict(empty=0.54 + .35, obstacle=0.0, goal=0.1, agent=0.01), # Order matters! Agents come last
         truncated_timesteps=16,
         timesteps = 128,
         environment_samples=8,
