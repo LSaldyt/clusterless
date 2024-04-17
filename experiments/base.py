@@ -35,6 +35,10 @@ def defaults(shared):
         selected_env=-1,
         single_agent=False,
 
+        debug=False,
+        debug_trace_depth=4,
+        detect_cycles=True,
+
         )
     s.update(codes={
                  **{k : i for i, k in enumerate(s.probs.keys())},

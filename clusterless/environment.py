@@ -53,6 +53,7 @@ def simulate(env_map, policy, base_policy, timesteps, env_index, s, do_render=Fa
     memory  = init_memory(env_map, s)
 
     unique_maps = set()
+    trace       = list()
 
     cumulative = Counter(n_goals_achieved=0, n_collisions_obstacle=0, n_collisions_agents=0)
 
@@ -66,12 +67,17 @@ def simulate(env_map, policy, base_policy, timesteps, env_index, s, do_render=Fa
         actions = policy(env_map, sense_input, base_policy, t, s)
         info    = transition(env_map, actions, s) # Important: Do transition at the end of the loop
 
-        env_hash = env_map.hash()
-        if env_hash not in unique_maps:
-            unique_maps.add(env_hash)
-        else:
-            env_map.full_render(sense_input)
-            raise CircularBehaviorException(f'Circular behavior detected!!')
+        if s.debug:
+            trace.append((actions, env_map.clone()))
+
+        if s.detect_cycles:
+            env_hash = env_map.hash()
+            if env_hash not in unique_maps:
+                unique_maps.add(env_hash)
+            else:
+                for actions, old_map in trace[-s.debug_trace_depth:]:
+                    old_map.render_grid()
+                raise CircularBehaviorException(f'Circular behavior detected!!')
 
         cumulative = {k : cumulative[k] + vn for k, vn in info.items()}
 

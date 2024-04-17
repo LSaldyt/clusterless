@@ -45,4 +45,5 @@ def rollout_egocentric(mem, perfect_a_info, base_policy_actions, base_policy, ag
             values[j] = -np.infty
         else:
             values[j] = results['score'] / results['step_count']
+    print(values)
     return s.action_space[np.argmax(values)]
