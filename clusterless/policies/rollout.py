@@ -30,7 +30,8 @@ def rollout_egocentric(mem, perfect_a_info, base_policy_actions, base_policy, ag
         future_actions[ego_i, :] = action
         next_map  = mem.map.clone()
         info      = transition(next_map, future_actions, s) # Modifies next_map
-        info['score'] = info['n_goals_achieved']
+        info['score']   = info['n_goals_achieved']
+        info['score_d'] = info['n_goals_achieved']
         info['step_count'] = 1 # type: ignore
         lookahead_miracle = next_map.count('goal') == 0
         rollout_timesteps = np.minimum(s.timesteps - t, s.truncated_timesteps)
@@ -44,6 +45,10 @@ def rollout_egocentric(mem, perfect_a_info, base_policy_actions, base_policy, ag
         if immediate_coll > 0:
             values[j] = -np.infty
         else:
-            values[j] = results['score'] / results['step_count']
-    print(values)
+            values[j] = results['score_d'] 
+        a = s.action_words[j]
+        v = values[j]
+        print(f'{a:10} {v:4.4f} {results["score_d"]:3} {results["step_count"]:<3}')
+    chosen = np.argmax(values)
+    print(f'Rollout action: {s.action_words[chosen]}')
     return s.action_space[np.argmax(values)]

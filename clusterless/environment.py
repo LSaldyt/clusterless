@@ -47,8 +47,21 @@ def transition(map, actions, s):
         n_collisions_agents   = np.sum(unique_counts) - unique_counts.shape[0],
     )
 
+def detect_cycles(env_hash, unique_maps, trace, do_render, policy, s):
+    if env_hash not in unique_maps:
+        unique_maps.add(env_hash)
+    else:
+        print(f'Repeated hash: {env_hash}!!!')
+        print(policy)
+        for actions, old_map in trace[-s.debug_trace_depth:]:
+            print(old_map.hash())
+            old_map.render_grid()
+        exit()
+        raise CircularBehaviorException(f'Circular behavior detected!!')
+
 def simulate(env_map, policy, base_policy, timesteps, env_index, s, do_render=False, check_goals=True): 
     score   = 0 # Number of goals achieved
+    score_d = 0 # Discounted score
     n_goals = env_map.count('goal')
     memory  = init_memory(env_map, s)
 
@@ -57,11 +70,18 @@ def simulate(env_map, policy, base_policy, timesteps, env_index, s, do_render=Fa
 
     cumulative = Counter(n_goals_achieved=0, n_collisions_obstacle=0, n_collisions_agents=0)
 
+    scores = []
+
     step_count = timesteps
     for t in range(timesteps):
         sense_input = list(sense_environment(env_map, memory, s, t))
 
+        env_hash = env_map.hash()
+        if s.detect_cycles:
+            detect_cycles(env_hash, unique_maps, trace, do_render, policy, s)
+
         if do_render:
+            print(f'Environment hash: {env_hash}')
             env_map.full_render(sense_input)
 
         actions = policy(env_map, sense_input, base_policy, t, s)
@@ -70,18 +90,12 @@ def simulate(env_map, policy, base_policy, timesteps, env_index, s, do_render=Fa
         if s.debug:
             trace.append((actions, env_map.clone()))
 
-        if s.detect_cycles:
-            env_hash = env_map.hash()
-            if env_hash not in unique_maps:
-                unique_maps.add(env_hash)
-            else:
-                for actions, old_map in trace[-s.debug_trace_depth:]:
-                    old_map.render_grid()
-                raise CircularBehaviorException(f'Circular behavior detected!!')
-
         cumulative = {k : cumulative[k] + vn for k, vn in info.items()}
 
-        score += info['n_goals_achieved'] * (s.discount)**(t)
+        scores.append(info['n_goals_achieved'])
+
+        score   += info['n_goals_achieved'] 
+        score_d += info['n_goals_achieved'] * (s.discount)**(t)
         remaining_goals = env_map.count('goal')
         if do_render:
             print(f'Step {t} {info} env = {env_index}')
@@ -90,5 +104,6 @@ def simulate(env_map, policy, base_policy, timesteps, env_index, s, do_render=Fa
             sense_input = list(sense_environment(env_map, memory, s, t))
             step_count  = t + 1 if remaining_goals == 0 else timesteps
             break
+    print(scores)
     assert score <= n_goals
-    return dict(score=score, percent=score/n_goals, step_count=step_count, **dict(cumulative))
+    return dict(score=score, score_d=score_d, percent=score/n_goals, step_count=step_count, **dict(cumulative))
