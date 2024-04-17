@@ -3,7 +3,7 @@ from collections import deque
 
 action_space = np.array([[0, 1], [1, 0], [-1, 0], [0, -1]])
 
-def nearest(map, sense_info, base_policy, s):
+def nearest(map, sense_info, base_policy, t, s):
     a_info  = map.agents_info
     actions = np.zeros(shape=(a_info.n_agents, 2), dtype=np.int32)
     for i, (c, mem, coords) in enumerate(sense_info):

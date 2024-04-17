@@ -4,18 +4,18 @@ import numpy as np
 
 empty_actions = lambda n : np.zeros(shape=(n, 2), dtype=np.int32)
 
-def rollout(map, sense_info, base_policy, s):
+def rollout(map, sense_info, base_policy, t, s):
     ''' Rollout for all agents '''
     # First calculate base policy for all agents
-    base_policy_actions = base_policy(map, sense_info, base_policy, s)
+    base_policy_actions = base_policy(map, sense_info, base_policy, t, s)
 
     actions = empty_actions(map.agents_info.n_agents)
     for i, (c, mem, _) in enumerate(sense_info):
         actions[i, :] = rollout_egocentric(mem, map.agents_info, 
-                                           base_policy_actions, base_policy, c, s)
+                                           base_policy_actions, base_policy, c, t, s)
     return actions
 
-def rollout_egocentric(mem, perfect_a_info, base_policy_actions, base_policy, agent_code, s):
+def rollout_egocentric(mem, perfect_a_info, base_policy_actions, base_policy, agent_code, t, s):
     ''' Egocentric 1-step lookahead with truncated rollout
         Requires s to define a base policy '''
     a_info = mem.map.agents_info
@@ -39,8 +39,10 @@ def rollout_egocentric(mem, perfect_a_info, base_policy_actions, base_policy, ag
         # next_map.render_grid()
         # print(info)
         lookahead_miracle = next_map.count('goal') == 0
-        results   = simulate(next_map, base_policy, base_policy, 
-                             s.truncated_timesteps, 0, s, do_render=False, check_goals=True)
+        rollout_timesteps = np.minimum(s.timesteps - t, s.truncated_timesteps)
+        # print(f'Rollout timesteps: {rollout_timesteps}')
+        results   = simulate(next_map, base_policy, base_policy, rollout_timesteps,
+                             0, s, do_render=False, check_goals=True)
         results   = {k : results.get(k, 0) + info.get(k, 0) for k in results}
         results['percent'] = results['score'] / mem.map.count('goal')
         if lookahead_miracle:
@@ -51,7 +53,7 @@ def rollout_egocentric(mem, perfect_a_info, base_policy_actions, base_policy, ag
             values[j] = -np.infty
         else:
             values[j] = results['score'] / results['step_count']
-    # print(values)
+    print(values)
     # print(s.action_space[np.argmax(values)])
 
     return s.action_space[np.argmax(values)]

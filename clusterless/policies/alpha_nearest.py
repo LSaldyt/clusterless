@@ -6,7 +6,7 @@ action_space = np.array([[0, 1], [1, 0], [-1, 0], [0, -1]])
 
 
 # def alpha_nearest(s, n_agents, sense_info, coordinates):
-def alpha_nearest(map, sense_info, base_policy, s):
+def alpha_nearest(map, sense_info, base_policy, t, s):
     ''' This policy tries to balance exploration and exploitation with a tunable parameter alpha.
         Ideal: take the shortest path to the cell v which minimizes -log P(G(v)) + alpha*D(v)
             P(G(v)) is the probability that v is a goal. We write I(v) := -log P(G(v))

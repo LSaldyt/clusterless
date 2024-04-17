@@ -58,7 +58,7 @@ def simulate(env_map, policy, base_policy, timesteps, env_index, s, do_render=Fa
         if do_render:
             env_map.full_render(sense_input)
 
-        actions = policy(env_map, sense_input, base_policy, s)
+        actions = policy(env_map, sense_input, base_policy, t, s)
         info    = transition(env_map, actions, s) # Important: Do transition at the end of the loop
 
         cumulative = {k : cumulative[k] + vn for k, vn in info.items()}
