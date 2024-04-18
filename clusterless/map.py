@@ -6,15 +6,25 @@ import hashlib
 
 from science import Settings
 
+import rich
+
 from . import utils
 
-def render(mx, syms):
+def render(mx, syms, colors=None):
     ''' Render the environment in questionable unicode '''
     h, w = mx.shape
     def gen_syms():
         for i in range(h):
             for j in range(w):
-                yield syms[mx[i, j]]
+                s = syms[mx[i, j]]
+                if colors is not None:
+                    color = colors[i * h + j]
+                    if color:
+                        yield f'[{color}]{s}[/{color}]'
+                    else:
+                        yield s
+                else:
+                    yield s
             yield '\n'
     return ''.join(gen_syms())
 
@@ -51,16 +61,25 @@ class Map():
     def full_render(self, sense_input):
         s = self.settings
         rendered_views = [(' ' * s.view_size + '\n') * s.view_size]
-        rendered_grids = [render(self.grid, s.symbols)]
+        rendered_grids = [self.color_render(show=False)]
         codes          = []
         for c, mem, coords in sense_input:
             # rendered_views.append(render(view,         s.symbols))
-            rendered_grids.append(render(mem.map.grid, s.symbols))
+            rendered_grids.append(mem.map.color_render(show=False))
             codes.append(f'agent {s.symbols[c]}')
         descriptions   = [f'{name:<{s.size}}\n' for name in ['full'] + codes]
-        print(utils.horizontal_join(rendered_grids))
-        print(utils.horizontal_join(descriptions))
+        rich.print(utils.horizontal_join(rendered_grids))
+        rich.print(utils.horizontal_join(descriptions))
         # print(utils.horizontal_join(rendered_views, join=' ' * (s.size - s.view_size + 1)))
+
+    def color_render(self, show=True):
+        colors          = np.array(list(self.settings.colors))
+        per_cell_colors = colors[self.grid]
+        rendered = render(self.grid, self.settings.symbols, per_cell_colors.ravel())
+        if show:
+            rich.print(rendered)
+        else:
+            return rendered
 
     def render_grid(self):
         print(render(self.grid, self.settings.symbols))
@@ -78,6 +97,9 @@ class Map():
         comb = np.logical_or if kind == 'or' else np.logical_and
         if len(keys) == 1: comb = lambda x : x
         return comb(*(self.grid == self.settings.codes[k] for k in keys))
+
+    def at(self, *keys, **kwargs):
+        return self.coords_of(self.mask(*keys, **kwargs))
 
     def count(self, *keys):
         mask = self.mask(*keys)
