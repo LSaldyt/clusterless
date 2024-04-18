@@ -63,10 +63,11 @@ class Map():
         rendered_views = [(' ' * s.view_size + '\n') * s.view_size]
         rendered_grids = [self.color_render(show=False)]
         codes          = []
-        for c, mem, coords in sense_input:
-            # rendered_views.append(render(view,         s.symbols))
-            rendered_grids.append(mem.map.color_render(show=False))
-            codes.append(f'agent {s.symbols[c]}')
+        for sense in sense_input:
+            # TODO emplace circular views and render them if desired
+            # rendered_views.append(render(sense.view,         s.symbols))
+            rendered_grids.append(sense.memory.map.color_render(show=False))
+            codes.append(f'agent {s.symbols[sense.code]}')
         descriptions   = [f'{name:<{s.size}}\n' for name in ['full'] + codes]
         rich.print(utils.horizontal_join(rendered_grids))
         rich.print(utils.horizontal_join(descriptions))
@@ -87,16 +88,14 @@ class Map():
     def set_at(self, coords, values):
         ''' Set grid by vectorized coordinates to new values 
             This function is IMPURE, so it sets a flag accordingly '''
-        self.grid[coords[:, 0], coords[:, 1]] = values # type: ignore
+        utils.set_at(self.grid, coords, values)
         self._inc_purity()
 
     def coords_of(self, mask):
         return self.coords[mask.reshape((np.prod(self.grid.shape),))] # type: ignore
 
     def mask(self, *keys, kind='or'):
-        comb = np.logical_or if kind == 'or' else np.logical_and
-        if len(keys) == 1: comb = lambda x : x
-        return comb(*(self.grid == self.settings.codes[k] for k in keys))
+        return utils.mask(self.grid, self.settings, *keys, kind=kind)
 
     def at(self, *keys, **kwargs):
         return self.coords_of(self.mask(*keys, **kwargs))

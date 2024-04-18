@@ -18,14 +18,15 @@ def alpha_nearest(map, sense_info, base_policy, t, s):
             We assume P(G(v)) is either 1 (goal seen at cell v) or the goal generation probability aka s.probs['goal']'''
     a_info = map.agents_info
     actions = np.zeros(shape=(a_info.n_agents,2),dtype=np.int32)
-    for i, (c, view, mem, coords) in enumerate(sense_info):
+    for i, sense in enumerate(sense_info):
+        mem = sense.memory
         goals = mem.map.grid == s.codes['goal']
         goals = goals.astype(float)
         unexplored = mem.map.grid == s.codes['unseen']
         unexplored = s.probs['goal']* unexplored.astype(float)
         possible_targets = (unexplored+goals).reshape((np.prod((s.size,s.size))),)
         # print(f"checking for {c}")
-        move = shortest_path_alpha(s, possible_targets, coords, map.coords, mem)
+        move = shortest_path_alpha(s, possible_targets, sense.xy, map.coords, mem)
         actions[i,:]=move
     return actions
 

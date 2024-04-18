@@ -12,8 +12,6 @@ def emplace(memory, world, s):
 
     duplicate_mask = np.array([c in seen.codes for c in new.codes], dtype=np.int32) == 1
     if duplicate_mask.shape[0] != 0:
-        print(duplicate_mask)
-        print(new.coords)
         duplicate_coords = new.coords[duplicate_mask]
         unique_codes     = new.codes[duplicate_mask] + np.max(new.codes)
         world_filtered   = world.clone()

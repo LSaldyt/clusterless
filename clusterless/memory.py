@@ -1,15 +1,18 @@
 import numpy as np
 import numpy.typing as npt
 from dataclasses import dataclass
+from collections import namedtuple
 
 from . import utils
-from .utils import at_xy
+from .utils import at_xy, mask
 from .map import Map
 
 @dataclass
 class Memory():
     map  : Map
     time : npt.ArrayLike
+
+AgentSense = namedtuple('AgentSense', ['memory', 'view', 'code', 'xy'])
 
 ''' Memory is a series of views over time 
     Agents will move, goals may be taken, 
@@ -36,13 +39,29 @@ def init_memory(env_map, s):
 
 def sense_environment(env_map, memory, s, timestep):
     a_info = env_map.agents_info
-    for c, (ac, view_coords, view) in zip(a_info.codes, views(env_map, s)): 
+    for c, (xy, view_coords, view) in zip(a_info.codes, views(env_map, s)): 
         memory[c].map.grid[*at_xy(view_coords)] = view
         memory[c].time[    *at_xy(view_coords)] = timestep
-        yield c, memory[c], ac
+        yield AgentSense(memory[c], view, c, xy)
 
-def merge_memory(mem_a, mem_b):
+def merge_memory(mem_a, mem_b, s):
     recent   = mem_a.time < mem_b.time
     new_grid = np.where(recent, mem_a.map.grid, mem_b.map.grid)
     new_time = np.where(recent, mem_a.time,     mem_b.time)
-    return Memory(Map(new_grid), new_time)
+    return Memory(Map(s, new_grid), new_time)
+
+def get_neighbors(sense, s):
+    neighbor_mask = ((sense.view >= s.codes['agent']) & (sense.view != sense.code))
+    neighbors     = sense.view[neighbor_mask]
+    return neighbors
+
+def update_memories(senses, memory, s):
+    for sense in senses:
+        new_memory = sense.memory
+        for n in get_neighbors(sense, s):
+            new_memory = merge_memory(new_memory, memory[n], s)
+        yield sense.code, new_memory
+
+def communicate(memory, senses, s):
+    for c, mem in list(update_memories(senses, memory, s)):
+        memory[c] = mem

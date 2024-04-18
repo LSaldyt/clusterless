@@ -12,9 +12,10 @@ def rollout(map, sense_info, base_policy, t, s):
     base_policy_actions = base_policy(map, sense_info, base_policy, t, s)
 
     actions = empty_actions(map.agents_info.n_agents)
-    for i, (c, mem, _) in enumerate(sense_info):
-        actions[i, :] = egocentric_rollout(mem, map.agents_info, 
-                                           base_policy_actions, base_policy, c, t, s)
+    for i, sense in enumerate(sense_info):
+        actions[i, :] = egocentric_rollout(sense.memory, map.agents_info, 
+                                           base_policy_actions, base_policy, 
+                                           sense.code, t, s)
     return actions
 
 def cost_to_go(env_map, policy, horizon, s):

@@ -72,8 +72,6 @@ def simulate(env_map, policy, base_policy, timesteps, env_index, s, do_render=Fa
 
     cumulative = Counter(n_goals_achieved=0, n_collisions_obstacle=0, n_collisions_agents=0)
 
-    scores = []
-
     step_count = timesteps
     for t in range(timesteps):
         sense_input = list(sense_environment(env_map, memory, s, t))
@@ -99,8 +97,6 @@ def simulate(env_map, policy, base_policy, timesteps, env_index, s, do_render=Fa
 
         cumulative = {k : cumulative[k] + vn for k, vn in info.items()}
 
-        scores.append(info['n_goals_achieved'])
-
         score   += info['n_goals_achieved'] 
         score_d += info['n_goals_achieved'] * (s.discount)**(t)
         remaining_goals = env_map.count('goal')
@@ -111,6 +107,6 @@ def simulate(env_map, policy, base_policy, timesteps, env_index, s, do_render=Fa
             sense_input = list(sense_environment(env_map, memory, s, t))
             step_count  = t + 1 if remaining_goals == 0 else timesteps
             break
-    print(scores)
+
     assert score <= n_goals
     return dict(score=score, score_d=score_d, percent=score/n_goals, step_count=step_count, **dict(cumulative))

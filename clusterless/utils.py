@@ -35,6 +35,14 @@ def cartesian_product(*arrays):
 def grid_coordinates(n):
     return cartesian_product(np.arange(n), np.arange(n))
 
+def set_at(mx, coords, values):
+    mx[*at_xy(coords)] = values 
+
+def mask(mx, s, *keys, kind='or'):
+    comb = np.logical_or if kind == 'or' else np.logical_and
+    if len(keys) == 1: comb = lambda x : x
+    return comb(*(mx == s.codes[k] for k in keys))
+
 def horizontal_join(elements, join=' '):
     element_lines = (el.split('\n') for el in elements)
     rows = (join.join(row_items) for row_items in zip(*element_lines))

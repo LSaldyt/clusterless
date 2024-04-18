@@ -5,10 +5,11 @@ from clusterless.policies import available_policies
 import string
 import numpy as np
 
-def defaults(shared):
+def defaults(shared=Settings()):
     agent_colors = ['red']
     s = shared.derive(
-        symbols = '·□★' + ('ζξΞѯƔȣ☭' + '♔♕♖♗♘♙♚♛♜♝♞♟' + string.ascii_lowercase + string.ascii_uppercase)*20 + '?☠',
+        # TODO: Just use further unicode symbols and try not to repeat agent characters. Only matters for large grids and frequent agent spawns
+        symbols = '·□★' + ('ζξΞѯƔȣ☭' + '♔♕♖♗♘♙♚♛♜♝♞♟' + string.ascii_lowercase + string.ascii_uppercase) + '?☠', 
         colors  = ['', '', 'gold3'] + agent_colors * 100 + ['', 'dark_red'],
 
         # Environment settings
