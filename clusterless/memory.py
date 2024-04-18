@@ -3,6 +3,7 @@ import numpy.typing as npt
 from dataclasses import dataclass
 
 from . import utils
+from .utils import at_xy
 from .map import Map
 
 @dataclass
@@ -15,29 +16,29 @@ class Memory():
     otherwise empty/obstacle are certain, 
     agents/goals in current time step are certain '''
 
-def views(map, s):
+def views(env_map, s):
     ''' Produce local views for all agents.
         A view is a local n x n map around an agent.
         View that go beyond the border of the map are padded. '''
-    a_info       = map.agents_info
+    a_info       = env_map.agents_info
     view_fn      = getattr(utils, s.view_type)
     view_offsets = view_fn(s.view_size)
     for i in range(a_info.n_agents): # Seemed intuitive, faster and more memory efficient than a vectorized operation
         view_coords    = view_offsets + a_info.coords[i, :]
-        view_coords    = view_coords % map.grid.shape[0]
-        view           = map.grid[view_coords[:, 0], view_coords[:, 1]]
+        view_coords    = view_coords % env_map.grid.shape[0]
+        view           = env_map.grid[view_coords[:, 0], view_coords[:, 1]]
         yield a_info.coords[i, :], view_coords, view
 
-def init_memory(map, s):
-    return {k : Memory(Map(s, np.full(map.grid.shape, s.codes['unseen'])), 
-                       np.full(map.grid.shape, 0)) 
-            for k in map.agents_info.codes}
+def init_memory(env_map, s):
+    return {k : Memory(Map(s, np.full(env_map.grid.shape, s.codes['unseen'])), 
+                       np.full(env_map.grid.shape, 0)) 
+            for k in env_map.agents_info.codes}
 
-def sense_environment(map, memory, s, timestep):
-    a_info = map.agents_info
-    for c, (ac, view_coords, view) in zip(a_info.codes, views(map, s)): 
-        memory[c].map.grid[view_coords[:, 0], view_coords[:, 1]] = view
-        memory[c].time[    view_coords[:, 0], view_coords[:, 1]] = timestep
+def sense_environment(env_map, memory, s, timestep):
+    a_info = env_map.agents_info
+    for c, (ac, view_coords, view) in zip(a_info.codes, views(env_map, s)): 
+        memory[c].map.grid[*at_xy(view_coords)] = view
+        memory[c].time[    *at_xy(view_coords)] = timestep
         yield c, memory[c], ac
 
 def merge_memory(mem_a, mem_b):

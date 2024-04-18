@@ -6,31 +6,38 @@ import string
 import numpy as np
 
 def defaults(shared):
+    agent_colors = ['red']
     s = shared.derive(
-        size=8,
         symbols = '·□★' + ('ζξΞѯƔȣ☭' + '♔♕♖♗♘♙♚♛♜♝♞♟' + string.ascii_lowercase + string.ascii_uppercase)*20 + '?☠',
+        colors  = ['', '', 'gold3'] + agent_colors * 100 + ['', 'dark_red'],
+
+        # Environment settings
         gen     = np.random.default_rng(2024),
-        # probs   = dict(empty=0.54, obstacle=0.35, goal=0.1, agent=0.01), # Order matters! Agents come last
-        # probs   = dict(empty=0.54, obstacle=0.35, goal=0.1, agent=0.01), # Order matters! Agents come last
-        # probs   = dict(empty=0.54 + .35, obstacle=0.0, goal=0.1, agent=0.01), # Order matters! Agents come last
         probs   = dict(empty=0.53, obstacle=0.25, goal=0.2, agent=0.02), # Order matters! Agents come last
 
-        discount=0.95,
-        truncated_timesteps=16,
-        timesteps = 128,
-        environment_samples=8,
-        view_size=3,
+        # Scale parameters
+        size                = 8,
+        truncated_timesteps = 16,
+        timesteps           = 128,
+        environment_samples = 8,
+
+        # Policy
         policy='rollout',
         base_policy='wave',
-        do_render=True,
 
+        # Reward settings
+        discount=0.95,
         obstacle_cost=1.0, # Just some bruises
         death_cost=10.0,   # One death is worth ten goals, arbitrarily. Our agents are cheap.
 
-        view_type='circle',
-
+        # Actions
         action_space = np.array([[-1, 0], [1, 0], [0, -1], [0, 1], [0, 0]]),
         action_words = ('up', 'down', 'left', 'right', 'stay'),
+        view_size=3,
+        view_type='circle',
+
+        # Monte carlo
+        n_worlds=16, 
             
         # Debugging/analysis options
         selected_env=-1,
@@ -40,6 +47,7 @@ def defaults(shared):
         debug_trace_depth=4,
         debug_alt_nearest=True,
         detect_cycles=True,
+        do_render=True,
 
         )
     s.update(codes={

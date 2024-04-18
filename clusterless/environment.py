@@ -11,7 +11,7 @@ from .memory import init_memory, sense_environment
 class CircularBehaviorException(RuntimeError):
     pass
 
-def transition(map, actions, s):
+def transition(env_map, actions, s):
     ''' Note: This function MODIFIES map intentionally, for efficiency.
 
         Move all agents at once according to their actions:
@@ -19,14 +19,13 @@ def transition(map, actions, s):
         If an agent touches a goal, that goal is achieved. 
         Agents cannot step into obstacles.. or they stay in place at a penalty 
         Agents cannot collide.. or they die? ☠'''
-    a_info = map.agents_info
+    a_info = env_map.agents_info
     # Progress actions, (optionally) enforce map boundaries
     assert (np.sum(np.abs(actions),axis=1)<=1).all()
     assert actions.shape == a_info.coords.shape, f'Future actions must match existing agent count, {a_info.coords.shape}, {actions.shape}'
     next_coords    = (a_info.coords + actions) 
-    next_coords    = next_coords % (map.grid.shape[0])
-    # next_locations = map.grid[next_coords[:, 0], next_coords[:, 1]]
-    next_locations = map.grid[*at_xy(next_coords)]
+    next_coords    = next_coords % (env_map.grid.shape[0])
+    next_locations = env_map.grid[*at_xy(next_coords)]
     # Enforce obstacles (and dead agents as obstacles)
     allowed_move   = ((next_locations != s.codes['obstacle']) & (next_locations != s.codes['dead']))
     final_coords   = np.where(utils.broadcast(allowed_move, 2), next_coords, a_info.coords)
@@ -35,12 +34,12 @@ def transition(map, actions, s):
     collision_mask   = unique_counts > 1
     collision_coords = unique_coords[collision_mask]
     if (collision_mask).any():
-        map.set_at(collision_coords, s.codes['dead'])
+        env_map.set_at(collision_coords, s.codes['dead'])
     non_collision_coords = unique_coords[collision_mask == False]
-    reached_locations    = map.grid[*at_xy(non_collision_coords)]
+    reached_locations    = env_map.grid[*at_xy(non_collision_coords)]
     # Move agents to (filtered) locations
-    map.set_at(a_info.coords, s.codes['empty'])
-    map.set_at(final_coords,  a_info.codes)
+    env_map.set_at(a_info.coords, s.codes['empty'])
+    env_map.set_at(final_coords,  a_info.codes)
 
     # Count goals and collision types
     goal_mask = reached_locations == s.codes['goal']
