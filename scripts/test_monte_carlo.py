@@ -2,6 +2,7 @@ import numpy  as np
 import pandas as pd
 
 from science import Settings
+from rich.progress import track
 
 from experiments.base import defaults
 
@@ -13,9 +14,9 @@ from clusterless.policies         import available_policies
 
 def run():
     s = defaults(Settings())
-    s = s.derive(size=12,
-                 probs=dict(empty=0.40, obstacle=0.25, goal=0.2, agent=0.15), 
-                 n_worlds=32,
+    s = s.derive(size=16,
+                 probs=dict(empty=0.54, obstacle=0.25, goal=0.2, agent=0.01), 
+                 n_worlds=1024,
                  )
 
     horizon     = 32
@@ -31,7 +32,9 @@ def run():
     senses = list(sense_environment(env_map, memory, s, 0))
 
     scores = np.zeros((a_info.n_agents, s.n_worlds))
-    for i, world in enumerate(generate_worlds(s)):
+    for i, world in track(enumerate(generate_worlds(s)),
+                          description='Dreaming of other worlds to do glorious rollout in..',
+                          total=s.n_worlds):
         print('World (ϴ)\n')
         world.color_render()
         for j, (c, mem, _) in enumerate(senses):
