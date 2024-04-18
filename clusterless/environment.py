@@ -4,6 +4,7 @@ from functools import reduce
 import operator
 
 from . import utils
+from .utils import at_xy
 from .map import Map
 from .memory import init_memory, sense_environment
 
@@ -24,7 +25,8 @@ def transition(map, actions, s):
     assert actions.shape == a_info.coords.shape, f'Future actions must match existing agent count, {a_info.coords.shape}, {actions.shape}'
     next_coords    = (a_info.coords + actions) 
     next_coords    = next_coords % (map.grid.shape[0])
-    next_locations = map.grid[next_coords[:, 0], next_coords[:, 1]]
+    # next_locations = map.grid[next_coords[:, 0], next_coords[:, 1]]
+    next_locations = map.grid[*at_xy(next_coords)]
     # Enforce obstacles (and dead agents as obstacles)
     allowed_move   = ((next_locations != s.codes['obstacle']) & (next_locations != s.codes['dead']))
     final_coords   = np.where(utils.broadcast(allowed_move, 2), next_coords, a_info.coords)
@@ -35,7 +37,7 @@ def transition(map, actions, s):
     if (collision_mask).any():
         map.set_at(collision_coords, s.codes['dead'])
     non_collision_coords = unique_coords[collision_mask == False]
-    reached_locations    = map.grid[non_collision_coords[:, 0], non_collision_coords[:, 1]]
+    reached_locations    = map.grid[*at_xy(non_collision_coords)]
     # Move agents to (filtered) locations
     map.set_at(a_info.coords, s.codes['empty'])
     map.set_at(final_coords,  a_info.codes)

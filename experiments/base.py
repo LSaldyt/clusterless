@@ -21,7 +21,7 @@ def defaults(shared):
         environment_samples=8,
         view_size=3,
         policy='rollout',
-        base_policy='nearest',
+        base_policy='wave',
         do_render=True,
 
         obstacle_cost=1.0, # Just some bruises

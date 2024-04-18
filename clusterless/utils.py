@@ -40,3 +40,5 @@ def horizontal_join(elements, join=' '):
     rows = (join.join(row_items) for row_items in zip(*element_lines))
     return '\n'.join(rows)
 
+def at_xy(a):
+    return a[:, 0], a[:, 1]

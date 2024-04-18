@@ -18,6 +18,7 @@ def rollout(map, sense_info, base_policy, t, s):
 def rollout_egocentric(mem, perfect_a_info, base_policy_actions, base_policy, agent_code, t, s):
     ''' Egocentric 1-step lookahead with truncated rollout
         Requires s to define a base policy '''
+    mem.map._inc_purity()
     a_info = mem.map.agents_info
     values = np.zeros(s.action_space.shape[0], dtype=np.float32)
 
@@ -36,7 +37,7 @@ def rollout_egocentric(mem, perfect_a_info, base_policy_actions, base_policy, ag
         lookahead_miracle = next_map.count('goal') == 0
         rollout_timesteps = np.minimum(s.timesteps - t, s.truncated_timesteps)
         results   = simulate(next_map, base_policy, base_policy, rollout_timesteps,
-                             0, s, do_render=False, check_goals=True)
+                             0, s, do_render=False, check_goals=True, check_cycles=False)
         results   = {k : results.get(k, 0) + info.get(k, 0) for k in results}
         results['percent'] = results['score'] / mem.map.count('goal')
         if lookahead_miracle:
