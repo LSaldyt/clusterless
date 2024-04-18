@@ -17,6 +17,11 @@ def rollout(map, sense_info, base_policy, t, s):
                                            base_policy_actions, base_policy, c, t, s)
     return actions
 
+def cost_to_go(env_map, policy, horizon, s):
+    results = simulate(env_map, policy, policy, horizon,
+                       0, s, do_render=False, check_goals=True, check_cycles=False)
+    return results['score_d'] # Discounted score
+
 def egocentric_rollout(mem, perfect_a_info, given_actions, base_policy, agent_code, t, s):
     ''' Egocentric 1-step lookahead with truncated rollout
         Requires s to define a base policy '''
@@ -35,21 +40,12 @@ def egocentric_rollout(mem, perfect_a_info, given_actions, base_policy, agent_co
         next_map  = mem.map.clone()
         info      = transition(next_map, future_actions, s) # Modifies next_map
         horizon   = np.minimum(s.timesteps - t, s.truncated_timesteps)
-        results   = simulate(next_map, base_policy, base_policy, horizon,
-                             0, s, do_render=False, check_goals=True, check_cycles=False)
-
-        lookahead_miracle = next_map.count('goal') == 0
-        if lookahead_miracle:
-            results['step_count'] = results['step_count'] - 1
+        score_d   = cost_to_go(next_map, base_policy, horizon, s)
 
         immediate_coll = info['n_collisions_obstacle'] + info['n_collisions_agents']
         if immediate_coll > 0:
             values[j] = -np.infty
         else:
-            values[j] = info['n_goals_achieved'] + s.discount * results['score_d'] 
-        # a = s.action_words[j]
-        # v = values[j]
-        # print(f'{a:10} {v:4.4f} {results["score_d"]:3} {results["step_count"]:<3}')
-    # chosen = np.argmax(values)
-    # print(f'Rollout action: {s.action_words[chosen]}')
+            values[j] = info['n_goals_achieved'] + s.discount * score_d
+
     return s.action_space[np.argmax(values)]
