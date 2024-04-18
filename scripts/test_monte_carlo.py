@@ -13,9 +13,9 @@ from clusterless.policies         import available_policies
 
 def run():
     s = defaults(Settings())
-    s = s.derive(size=8,
+    s = s.derive(size=12,
                  probs=dict(empty=0.40, obstacle=0.25, goal=0.2, agent=0.15), 
-                 n_worlds=128,
+                 n_worlds=32,
                  )
 
     horizon     = 32
@@ -28,7 +28,7 @@ def run():
     a_info = env_map.agents_info
 
     memory = init_memory(env_map, s)
-    senses = sense_environment(env_map, memory, s, 0)
+    senses = list(sense_environment(env_map, memory, s, 0))
 
     scores = np.zeros((a_info.n_agents, s.n_worlds))
     for i, world in enumerate(generate_worlds(s)):
@@ -44,7 +44,7 @@ def run():
 
             score_d = cost_to_go(possible, base_policy, horizon, s)
             print(score_d)
-            scores[i, j] = score_d
+            scores[j, i] = score_d
 
     agents = np.array(list(s.symbols))[a_info.codes]
     print(scores.shape)
