@@ -1,7 +1,7 @@
 import numpy as np
 from collections import Counter
-from functools import reduce
-import operator
+
+from rich.progress import track
 
 from . import utils
 from .utils import at_xy
@@ -61,7 +61,7 @@ def detect_cycles(env_hash, unique_maps, trace, do_render, policy, s):
         exit()
         raise CircularBehaviorException(f'Circular behavior detected!!')
 
-def simulate(env_map, policy, base_policy, timesteps, env_index, s, do_render=False, check_goals=True, check_cycles=True): 
+def simulate(env_map, policy, base_policy, timesteps, env_index, s, do_render=False, check_goals=True, check_cycles=True, progress=None, task=None): 
     score   = 0 # Number of goals achieved
     score_d = 0 # Discounted score
     n_goals = env_map.count('goal')
@@ -89,6 +89,8 @@ def simulate(env_map, policy, base_policy, timesteps, env_index, s, do_render=Fa
         try:
             actions = policy(env_map, sense_input, base_policy, t, s)
             info    = transition(env_map, actions, s) # Important: Do transition at the end of the loop
+            if progress is not None and task is not None:
+                progress.update(task, advance=1) # type: ignore
         except utils.UnsolvableException:
             break
 
