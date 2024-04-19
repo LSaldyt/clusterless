@@ -3,7 +3,7 @@ from experiments.base import defaults
 
 from clusterless.memory   import init_memory, sense_environment, communicate
 from clusterless.scenario import from_unicode
-from clusterless.clusters import clustering_baseline
+from clusterless.clusters import clustered_multiagent_rollout 
 
 from experiments.base     import defaults
 
@@ -35,6 +35,7 @@ def run():
 
     base_policy = wave
 
-    clustering_baseline(map, senses, memory, base_policy, s, 0)
+    actions = clustered_multiagent_rollout(map, senses, memory, base_policy, s, 0)
+    print(actions)
     # communicate(memory, senses, s)
 
