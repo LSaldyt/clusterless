@@ -10,4 +10,3 @@ def multiagent_rollout(map, sense_info, base_policy, t, s):
         given_actions[i, :] = egocentric_rollout(mem, map.agents_info, 
                                                  given_actions, base_policy, c, t, s)
     return given_actions
-

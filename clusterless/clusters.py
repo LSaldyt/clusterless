@@ -6,7 +6,7 @@ import numpy as np
 import itertools
 from .utils  import broadcast 
 from .memory import merge_memory
-# from .policies.multiagent_rollout import multiagent_rollout
+from .policies.multiagent_rollout import multiagent_rollout
 
 def form_clusters(env_map, senses, s):
     a_info    = env_map.agents_info
@@ -51,8 +51,10 @@ def clustering_baseline(env_map, senses, memory, s):
     for leader, cluster in clusters:
         share_memory(cluster, memory, s) 
         # Leader computes MAR for whole cluster
+        multiagent_rollout()
 
     exit()
 
 
+# def multiagent_rollout(map, sense_info, base_policy, t, s):
     # The plan is shared with children, and then run
