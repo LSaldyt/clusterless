@@ -8,6 +8,20 @@ from experiments.base     import defaults
 
 from .test_communication import world_str
 
+# ΞѯƔȣ☭
+
+world_str = '''
+Ξ·······ѯ
+····★····
+····□····
+····ζ····
+·········
+····ξ····
+····□····
+·········
+·········
+'''
+
 def run():
     s   = defaults().derive(size=9, view_size=2)
     map = from_unicode(world_str, s)

@@ -6,7 +6,7 @@ from rich.progress import track
 
 from experiments.base import defaults
 
-from clusterless.environment      import Map
+from clusterless.environment      import Map, simulate
 from clusterless.memory           import init_memory, sense_environment
 from clusterless.monte_carlo      import generate_worlds, emplace
 from clusterless.policies.rollout import cost_to_go
@@ -16,14 +16,13 @@ def run():
     s = defaults(Settings())
     s = s.derive(size=16,
                  probs=dict(empty=0.54, obstacle=0.25, goal=0.2, agent=0.01), 
-                 n_worlds=1024,
-                 )
+                 n_worlds=128)
 
-    horizon     = 32
+    horizon     = 256
     base_policy = available_policies['wave']
 
     print('Original\n')
-    env_map = Map(s)
+    env_map = Map(s) # Randomly generated map. Ground truth
     env_map.color_render()
 
     a_info = env_map.agents_info
@@ -37,15 +36,15 @@ def run():
                           total=s.n_worlds):
         print('World (ϴ)\n')
         world.color_render()
-        for j, (c, mem, _) in enumerate(senses):
-            agent = s.symbols[c]
+        for j, sense in enumerate(senses):
+            agent = s.symbols[sense.code]
             print(f'Memory {agent}\n')
-            mem.map.color_render()
-            possible = emplace(mem, world, s)
+            sense.memory.map.color_render()
+            possible = emplace(sense.memory, world, s)
             print(f'Emplaced {agent} ∈ ϴ\n')
             possible.color_render()
 
-            score_d = cost_to_go(possible, base_policy, horizon, s)
+            score_d = cost_to_go(possible, base_policy, horizon, s)['score']
             print(score_d)
             scores[j, i] = score_d
 
@@ -55,3 +54,9 @@ def run():
     print(df)
     print(df.describe())
 
+    print('Upper bound on expectation:')
+    print(senses[0].memory.map.count('unseen'), '*', s.probs['goal'])
+    print(senses[0].memory.map.count('unseen') * s.probs['goal'])
+    print('Ground truth for our world')
+    env_map.color_render()
+    print(simulate(env_map, base_policy, base_policy, horizon, 0, s, do_render=False))

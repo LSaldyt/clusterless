@@ -21,7 +21,8 @@ def rollout(map, sense_info, base_policy, t, s):
 def cost_to_go(env_map, policy, horizon, s):
     results = simulate(env_map, policy, policy, horizon,
                        0, s, do_render=False, check_goals=True, check_cycles=False)
-    return results['score_d'] # Discounted score
+    return results
+    # return results['score_d'] # Discounted score
 
 def egocentric_rollout(mem, perfect_a_info, given_actions, base_policy, agent_code, t, s):
     ''' Egocentric 1-step lookahead with truncated rollout
@@ -41,7 +42,7 @@ def egocentric_rollout(mem, perfect_a_info, given_actions, base_policy, agent_co
         next_map  = mem.map.clone()
         info      = transition(next_map, future_actions, s) # Modifies next_map
         horizon   = np.minimum(s.timesteps - t, s.truncated_timesteps)
-        score_d   = cost_to_go(next_map, base_policy, horizon, s)
+        score_d   = cost_to_go(next_map, base_policy, horizon, s)['score_d']
 
         immediate_coll = info['n_collisions_obstacle'] + info['n_collisions_agents']
         if immediate_coll > 0:

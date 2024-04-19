@@ -39,6 +39,9 @@ def defaults(shared=Settings()):
 
         # Monte carlo
         n_worlds=16, 
+
+        # Clustering
+        cluster_rounds=8,
             
         # Debugging/analysis options
         selected_env=-1,
