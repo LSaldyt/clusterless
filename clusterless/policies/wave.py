@@ -8,13 +8,13 @@ action_space = np.array([[0, 1], [1, 0], [-1, 0], [0, -1]])
 def wave(map, sense_info, base_policy, t, s):
     a_info  = map.agents_info
     actions = np.zeros(shape=(a_info.n_agents, 2), dtype=np.int32)
-    for i, (c, mem, ac) in enumerate(sense_info):
-        actions[i, :] = wave_egocentric(mem, ac, s)
+    for i, sense in enumerate(sense_info):
+        actions[i, :] = wave_egocentric(sense.memory, sense.xy, s)
     if (actions == 0).all(): # Absolutely no achievable goals or unexplored regions
         raise UnsolvableException('Wavefront algorithm definitively found no achievable goals for any agent (promise..)')
     return actions
 
-def wave_egocentric(mem, ac, s):
+def wave_egocentric(mem, xy, s):
     targets   = mem.map.mask('goal', 'unseen')
     obstacles = mem.map.mask('obstacle', 'dead', 'unseen')
 
@@ -45,5 +45,5 @@ def wave_egocentric(mem, ac, s):
         last = np.copy(working)
         target_coords = mem.map.coords_of((working > 1) & (working < 6))
     # show(working)
-    act_i = working[ac[0], ac[1]]
+    act_i = working[xy[0], xy[1]]
     return s.action_space[act_i - 2]
