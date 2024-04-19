@@ -33,13 +33,14 @@ def transition(env_map, actions, s):
     unique_coords, unique_counts = np.unique(final_coords, axis=0, return_counts=True)
     collision_mask   = unique_counts > 1
     collision_coords = unique_coords[collision_mask]
-    if (collision_mask).any():
-        env_map.set_at(collision_coords, s.codes['dead'])
     non_collision_coords = unique_coords[collision_mask == False]
     reached_locations    = env_map.grid[*at_xy(non_collision_coords)]
     # Move agents to (filtered) locations
     env_map.set_at(a_info.coords, s.codes['empty'])
     env_map.set_at(final_coords,  a_info.codes)
+    # Set dead agents last (overwriting agent codes at collision coords)
+    if (collision_mask).any():
+        env_map.set_at(collision_coords, s.codes['dead'])
 
     # Count goals and collision types
     goal_mask = reached_locations == s.codes['goal']
