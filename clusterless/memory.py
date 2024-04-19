@@ -45,7 +45,7 @@ def sense_environment(env_map, memory, s, timestep):
         yield AgentSense(memory[c], view, c, xy)
 
 def merge_memory(mem_a, mem_b, s):
-    recent   = mem_a.time < mem_b.time
+    recent   = mem_a.time > mem_b.time
     new_grid = np.where(recent, mem_a.map.grid, mem_b.map.grid)
     new_time = np.where(recent, mem_a.time,     mem_b.time)
     return Memory(Map(s, new_grid), new_time)
