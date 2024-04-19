@@ -2,10 +2,8 @@ import numpy as np
 from collections import deque
 from functools import reduce
 
-action_space = np.array([[0, 1], [1, 0], [-1, 0], [0, -1]])
+from .utils import empty_actions
 
-
-# def alpha_nearest(s, n_agents, sense_info, coordinates):
 def alpha_nearest(map, sense_info, base_policy, t, s):
     ''' This policy tries to balance exploration and exploitation with a tunable parameter alpha.
         Ideal: take the shortest path to the cell v which minimizes -log P(G(v)) + alpha*D(v)
@@ -16,8 +14,7 @@ def alpha_nearest(map, sense_info, base_policy, t, s):
             alpha*(D(v)-D(w))<I(w)-I(v)
         First Order Simplifications:
             We assume P(G(v)) is either 1 (goal seen at cell v) or the goal generation probability aka s.probs['goal']'''
-    a_info = map.agents_info
-    actions = np.zeros(shape=(a_info.n_agents,2),dtype=np.int32)
+    actions = empty_actions(len(sense_info))
     for i, sense in enumerate(sense_info):
         mem = sense.memory
         goals = mem.map.grid == s.codes['goal']
@@ -39,7 +36,7 @@ def shortest_path_alpha(s, probabilities, coords, coordinates, mem):
     illegal = {tuple(illegal[i,:]) for i in range(illegal.shape[0])}
     possible_first_moves = {}
     best = [np.array([0,0],dtype=np.int32), np.inf,np.inf,np.inf]
-    for action in action_space:
+    for action in s.action_space:
         poss_first_move = (coords+action)%s.size
         if tuple(poss_first_move) not in illegal:
             d.append((poss_first_move,poss_first_move,1))

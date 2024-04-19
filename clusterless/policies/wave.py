@@ -3,11 +3,10 @@ from collections import deque
 from ..map   import render
 from ..utils import UnsolvableException, at_xy, broadcast
 
-action_space = np.array([[0, 1], [1, 0], [-1, 0], [0, -1]])
+from .utils import empty_actions
 
 def wave(map, sense_info, base_policy, t, s):
-    a_info  = map.agents_info
-    actions = np.zeros(shape=(a_info.n_agents, 2), dtype=np.int32)
+    actions = empty_actions(len(sense_info))
     for i, sense in enumerate(sense_info):
         actions[i, :] = wave_egocentric(sense.memory, sense.xy, s)
     if (actions == 0).all(): # Absolutely no achievable goals or unexplored regions

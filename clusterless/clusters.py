@@ -4,8 +4,10 @@ A transcription / pseudocode of my understanding of Jamison's algorithm '''
 
 import numpy as np
 import itertools
+
+from clusterless.policies.wave import wave
 from .utils  import broadcast 
-from .memory import merge_memory
+from .memory import merge_memory, sense_environment
 from .policies.multiagent_rollout import multiagent_rollout
 
 def form_clusters(env_map, senses, s):
@@ -44,17 +46,22 @@ def form_clusters(env_map, senses, s):
 def share_memory(cluster, memory, s):
     ''' Share maps within a single cluster. Doesn't obey the tree. '''
     for a, b in itertools.combinations(cluster, 2): # O(n^2)
+        print(f'Sharing {a} → {b}')
         merge_memory(memory[a], memory[b], s)
 
-def clustering_baseline(env_map, senses, memory, s):
-    clusters = form_clusters(env_map, senses, s)
+def clustering_baseline(env_map, input_senses, memory, base_policy, s, t):
+    clusters = form_clusters(env_map, input_senses, s)
+    input_senses = {s.code : s for s in input_senses}
+    print(input_senses)
     for leader, cluster in clusters:
         share_memory(cluster, memory, s) 
+        print(f'Cluster: ({" ".join(s.symbols[c] for c in cluster)}), leader {s.symbols[leader[0]]}')
         # Leader computes MAR for whole cluster
-        multiagent_rollout()
-
+        local   = input_senses[leader[0]] # Leader's sensory information
+        senses  = [s for s in sense_environment(local.memory.map, memory, s, t)
+                   if s.code in set(cluster)] # Filter non-cluster members
+        env_map.full_render(senses)
+        actions = multiagent_rollout(senses[0].memory.map, senses, base_policy, t, s)
+        print(actions)
     exit()
-
-
-# def multiagent_rollout(map, sense_info, base_policy, t, s):
-    # The plan is shared with children, and then run
+    # # The plan is shared with children, and then run

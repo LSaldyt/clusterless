@@ -1,3 +1,4 @@
+from clusterless.policies.wave import wave
 from experiments.base import defaults
 
 from clusterless.memory   import init_memory, sense_environment, communicate
@@ -32,6 +33,8 @@ def run():
     print(f'Map/Memories')
     map.full_render(senses)
 
-    clustering_baseline(map, senses, memory, s)
+    base_policy = wave
+
+    clustering_baseline(map, senses, memory, base_policy, s, 0)
     # communicate(memory, senses, s)
 
