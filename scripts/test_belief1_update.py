@@ -93,6 +93,7 @@ def update_belief_from_ground_truth(b1_b0s, b1_probabilties, sense):
     #      Some may be done by rollout
     # In particular, agents are not moved around at all
     #      In fact, they're not distinguished from each other at all
+    # Also, we just assume agents don't exist after they move out of view
     max_t = np.max(sense.memory.time)
     update_grid = np.where(sense.memory.time==max_t,sense.memory.map.grid,-2)
     # -2 is unseen. Don't update based on this!
