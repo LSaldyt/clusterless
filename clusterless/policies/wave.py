@@ -5,7 +5,7 @@ from ..utils import UnsolvableException, at_xy, broadcast
 
 from .utils import empty_actions
 
-def wave(map, sense_info, base_policy, t, s):
+def wave(map, sense_info, memory, base_policy, t, s):
     actions = empty_actions(len(sense_info))
     for i, sense in enumerate(sense_info):
         actions[i, :] = wave_egocentric(sense.memory, sense.xy, s)

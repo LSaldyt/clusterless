@@ -21,7 +21,7 @@ def transition(env_map, actions, s):
         Agents cannot collide.. or they die? ☠'''
     a_info = env_map.agents_info
     # Progress actions, (optionally) enforce map boundaries
-    assert (np.sum(np.abs(actions),axis=1)<=1).all()
+    assert (np.sum(np.abs(actions), axis=1) <= 1).all()
     assert actions.shape == a_info.coords.shape, f'Future actions must match existing agent count, {a_info.coords.shape}, {actions.shape}'
     next_coords    = (a_info.coords + actions) 
     next_coords    = next_coords % (env_map.grid.shape[0])
@@ -89,7 +89,7 @@ def simulate(env_map, policy, base_policy, timesteps, env_index, s,
             env_map.full_render(sense_input)
 
         try:
-            actions = policy(env_map, sense_input, base_policy, t, s)
+            actions = policy(env_map, sense_input, memory, base_policy, t, s)
             info    = transition(env_map, actions, s) # Important: Do transition at the end of the loop
             if progress is not None and task is not None:
                 progress.update(task, advance=1) # type: ignore

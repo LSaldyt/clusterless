@@ -4,7 +4,7 @@ from functools import reduce
 
 from .utils import empty_actions
 
-def alpha_nearest(map, sense_info, base_policy, t, s):
+def alpha_nearest(map, sense_info, memory, base_policy, t, s):
     ''' This policy tries to balance exploration and exploitation with a tunable parameter alpha.
         Ideal: take the shortest path to the cell v which minimizes -log P(G(v)) + alpha*D(v)
             P(G(v)) is the probability that v is a goal. We write I(v) := -log P(G(v))
