@@ -1,8 +1,6 @@
 import numpy as np
 from collections import Counter
 
-from rich.progress import track
-
 from . import utils
 from .utils import at_xy
 from .map import Map
@@ -50,31 +48,25 @@ def transition(env_map, actions, s):
         n_collisions_agents   = np.sum(unique_counts) - unique_counts.shape[0],
     )
 
-def detect_cycles(env_hash, unique_maps, trace, do_render, policy, s):
+def detect_cycles(env_hash, unique_maps, do_render, policy, s):
     if env_hash not in unique_maps:
         unique_maps.add(env_hash)
     else:
         print(f'Repeated hash: {env_hash}!!!')
         print(policy)
-        for actions, old_map in trace[-s.debug_trace_depth:]:
-            print(old_map.hash())
-            old_map.render_grid()
-        # exit()
         raise CircularBehaviorException(f'Circular behavior detected!!')
 
-def simulate(env_map, policy, base_policy, timesteps, env_index, s, 
+def simulate(env_map, policy, base_policy, timesteps, s, 
              do_render=False, check_goals=True, check_cycles=True, 
-             progress=None, task=None): 
-    score   = 0 # Number of goals achieved
-    score_d = 0 # Discounted score
-    n_goals = env_map.count('goal')
-    memory  = init_memory(env_map, s)
-
-    unique_maps = set()
-    trace       = list()
-    action_hist = list()
-
+             progress=None, task=None, log_fn=None, extra=None): 
+    score      = 0 # Number of goals achieved
+    score_d    = 0 # Discounted score
+    n_goals    = env_map.count('goal')
+    memory     = init_memory(env_map, s)
+    map_hashes = set()
     cumulative = Counter(n_goals_achieved=0, n_collisions_obstacle=0, n_collisions_agents=0)
+    log_fn     = log_fn if log_fn is not None else lambda *x, **k : None
+    extra      = extra  if extra  is not None else dict()
 
     step_count = timesteps
     for t in range(timesteps):
@@ -82,7 +74,7 @@ def simulate(env_map, policy, base_policy, timesteps, env_index, s,
 
         env_hash = env_map.hash()
         if s.detect_cycles and check_cycles: # So that cycles can be disabled globally AND locally
-            detect_cycles(env_hash, unique_maps, trace, do_render, policy, s)
+            detect_cycles(env_hash, map_hashes, do_render, policy, s)
 
         if do_render:
             print(f'Environment hash: {env_hash}')
@@ -96,8 +88,6 @@ def simulate(env_map, policy, base_policy, timesteps, env_index, s,
         except utils.UnsolvableException:
             break
 
-        if s.debug:
-            trace.append((actions, env_map.clone()))
 
         cumulative = {k : cumulative[k] + vn for k, vn in info.items()}
 
@@ -105,7 +95,13 @@ def simulate(env_map, policy, base_policy, timesteps, env_index, s,
         score_d += info['n_goals_achieved'] * (s.discount)**(t)
         remaining_goals = env_map.count('goal')
         if do_render:
-            print(f'Step {t} {info} env = {env_index}')
+            print(f'Step {t} {info} env = {extra["env"]}')
+
+        # Log all information to parent experiment in simulation.csv
+        log_fn('simulation', dict(timestep=t, score_d=score_d, score=score,
+            wait=(actions == 0).all(), 
+            n_moves=np.sum(np.abs(actions)), **info, **extra))
+
         if ((check_goals and remaining_goals == 0) 
             or env_map.agents_info.n_agents == 0):
             sense_input = list(sense_environment(env_map, memory, s, t))
