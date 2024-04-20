@@ -69,7 +69,7 @@ def cluster_plan(cluster, local, memory, base_policy, s, t):
     ''' Run MAR within a cluster until all goals are reached or we timeout '''
     env_map = local.memory.map
     for r in range(s.cluster_plan_rounds_max):
-        env_map = map_for_simulate(Memory(env_map, local.memory.time), s, duplicates_only=True)
+        env_map = map_for_simulate(Memory(env_map, local.memory.time), s, duplicates_only=s.cluster_plan_duplicates_only)
         a_info  = env_map.agents_info
         senses  = list(sense_environment(env_map, memory, s, t + r))
         env_map.color_render()
@@ -116,7 +116,7 @@ def clustered_multiagent_rollout(env_map, input_senses, memory, base_policy, s, 
     queue = [empty_acts.copy() for _ in range(max_plan_len)] # All agents wait for all plans to finish (across clusters, by bound)
     for c_plan in cluster_plans:
         for t, (ind, act) in enumerate(c_plan):
-            print(t, ind.shape, act.shape, queue[t].shape)
+            # print(t, ind.shape, act.shape, queue[t].shape)
             queue[t][ind] = act # Emplace plans into correct timestep and agent indices
     if s.queue_cluster_actions:
         pad   = [empty_acts.copy() for _ in range(cluster_rounds + total_share_rounds)]

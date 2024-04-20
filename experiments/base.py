@@ -44,7 +44,11 @@ def defaults(shared=Settings()):
         cluster_rounds=8,
         cluster_plan_rounds_max=32,
         cluster_max_depth=9,
+        cluster_plan_duplicates_only=True, # Remove duplicates only when simulating from an agent's memory
         queue_cluster_actions=False, # If we count communication and cluster formation as empty actions
+
+        rollout_duplicates_only=True, # Remove duplicates only when simulating from an agent's memory
+        # Alternatively, remove all agents that aren't in the current timestep, e.g. forget about people out of view range
             
         # Debugging/analysis options
         selected_env=-1,

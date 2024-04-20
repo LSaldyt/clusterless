@@ -31,7 +31,7 @@ def egocentric_rollout(mem, codes, future_actions, base_policy, agent_code, t, s
         Requires s to define a base policy '''
     values  = np.zeros(s.action_space.shape[0], dtype=np.float32)
     ego_i   = codes.index(agent_code)
-    mem_map = map_for_simulate(mem, s)
+    mem_map = map_for_simulate(mem, s, duplicates_only=s.rollout_duplicates_only)
     a_info  = mem_map.agents_info
     if a_info.n_agents == 0:
         return s.action_space[-1, :]
@@ -39,7 +39,7 @@ def egocentric_rollout(mem, codes, future_actions, base_policy, agent_code, t, s
 
     for j, action in enumerate(s.action_space):
         future_actions[ego_i, :] = action
-        next_map  = map_for_simulate(mem, s) # This line will potentially delete agents we can't see!!
+        next_map  = map_for_simulate(mem, s, duplicates_only=s.rollout_duplicates_only) # This line will potentially delete agents we can't see!!
         code_mask = np.array([c in next_map.agents_info.codes for c in a_info.codes]) # So we remove unseen agents
         acts      = future_actions[np.arange(a_info.n_agents)[code_mask]]
         info      = transition(next_map, acts, s) # Modifies next_map
