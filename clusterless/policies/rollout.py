@@ -29,9 +29,10 @@ def cost_to_go(env_map, policy, horizon, s, do_render=False):
 def egocentric_rollout(mem, codes, future_actions, base_policy, agent_code, t, s, do_render=False):
     ''' Egocentric 1-step lookahead with truncated rollout
         Requires s to define a base policy '''
-    values = np.zeros(s.action_space.shape[0], dtype=np.float32)
-    ego_i  = codes.index(agent_code)
-    a_info = mem.map.agents_info
+    values  = np.zeros(s.action_space.shape[0], dtype=np.float32)
+    ego_i   = codes.index(agent_code)
+    mem_map = map_for_simulate(mem, s)
+    a_info  = mem_map.agents_info
 
     for j, action in enumerate(s.action_space):
         future_actions[ego_i, :] = action

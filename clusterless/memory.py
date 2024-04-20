@@ -44,6 +44,7 @@ def map_for_simulate(mem, s):
     agents = clone.grid >= s.codes['agent']
     clone.grid = np.where(agents, np.where(mem.time == latest, clone.grid, s.codes['empty']), clone.grid)
     clone.set_at(clone.at('unseen'), s.codes['obstacle'])
+    clone._inc_purity()
     return clone
 
 def sense_environment(env_map, memory, s, timestep):

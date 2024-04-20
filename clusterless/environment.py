@@ -22,7 +22,7 @@ def transition(env_map, actions, s):
     a_info = env_map.agents_info
     # Progress actions, (optionally) enforce map boundaries
     assert (np.sum(np.abs(actions), axis=1) <= 1).all()
-    assert actions.shape == a_info.coords.shape, f'Future actions must match existing agent count, {a_info.coords.shape}, {actions.shape}'
+    assert actions.shape == a_info.coords.shape, f'coords={a_info.coords.shape} != actions={actions.shape}'
     next_coords    = (a_info.coords + actions) 
     next_coords    = next_coords % (env_map.grid.shape[0])
     next_locations = env_map.grid[*at_xy(next_coords)]
