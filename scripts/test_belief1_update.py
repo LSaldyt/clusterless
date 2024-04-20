@@ -14,7 +14,7 @@ world_str = '''
 ····□····
 ····ζ····
 ·········
-····ξ····
+····ξΞ···
 ·········
 ·········
 ·········
@@ -57,7 +57,7 @@ def run():
             # print(b1_b0s[:,:,:,x+1])
 
     a_info = map.agents_info
-    actions = np.array([[0,1],[1,0]])
+    actions = np.array([[0,1],[1,0],[-1,0]])
     transition(map, actions, s)
     senses = list(sense_environment(map, memory, s, 1))
     print(f'Map/Memories after movement')
@@ -112,15 +112,15 @@ def update_belief_from_ground_truth(b1_b0s, b1_probabilties, sense):
     belief_update = broadcast(b0_grid,4) == np.arange(4)
     belief_update_mask = broadcast(np.max(belief_update,axis=2),4)
     b1_b0s[:,:,:,0][belief_update_mask] = belief_update[belief_update_mask]
-    assert (np.sum(b1_b0s, axis=2)==1).all()
-
-    # Deleting thresholded agents as if they never existed at all
-    dump_thresholded(b1_b0s[:,:,:,0])
-    b1_probabilties[:,1] = np.where(b1_probabilties[:,1]<threshold_value,0, b1_probabilties[:,1])
+    assert(np.sum(b1_b0s, axis=2)==1).all()
 
     # Agents we can see, we believe in absolutely
     agents = np.unique(update_grid)  #& update_grid !=sense.code).any()
     agents = agents[np.logical_and(agents!=sense.code,agents>=3)]
+
+    # Before we update agents with P=1 locations, we zero out any existing entries for them
+    b1_probabilties[:,1][np.isin(b1_probabilties[:,0], agents)]=0
+
     for agent in agents:
         # NOTE if a view is crowded with other agents, and the memory_bound is too low,
         #      the reasoner WILL get overwhelmed and start to forget people after others 
@@ -135,8 +135,23 @@ def update_belief_from_ground_truth(b1_b0s, b1_probabilties, sense):
         b1_b0s[:,:,:,argmin_probability+1] = b1_b0s[:,:,:,0]
     assert (np.sum(b1_b0s, axis=2)==1).all()
 
+
+    # Now that we've taken into account solid, absolute reality, we have to do some 
+    #     kind of calculation to update our uncertain cells.
+    # VERY IMPORTANT: do not update cells we are certain of during this part! 
+
     # The dumbest version: if I didn't see someone this round, I forget them completely
+    # In the future, this portion will be replaced with actual updating via rollout
     b1_probabilties[:,1][np.isin(b1_probabilties[:,0], agents, invert=True)]=0
+
+    # assert(np.sum)
+
+    print(np.bincount(b1_probabilties[:,1],weights=b1_probabilties[:,0]))
+
+    # Deleting thresholded agents as if they never existed at all
+    dump_thresholded(b1_b0s[:,:,:,0])
+    b1_probabilties[:,1] = np.where(b1_probabilties[:,1]<threshold_value,0, b1_probabilties[:,1])
+    
 
     # TODO make sure that updating actually makes sense.
     # IN particular, the sum of a single agent id's probabilities must add up to 1
