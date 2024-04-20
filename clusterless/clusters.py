@@ -8,7 +8,7 @@ from .utils  import broadcast
 from .memory import merge_memory, sense_environment, map_for_simulate, Memory
 from .environment import transition
 from .policies.multiagent_rollout import multiagent_rollout
-from .policies.random             import random as random_policy
+from .policies.brownian           import brownian
 
 def form_clusters(env_map, senses, s):
     a_info    = env_map.agents_info
@@ -82,7 +82,7 @@ def cluster_plan(cluster, local, memory, base_policy, s, t):
         if env_map.count('goal') == 0: # All goals are completed!
             break
         if cluster.shape[0] == 1: # Singleton clusters (no goals)
-            actions = random_policy(env_map, senses, memory, base_policy, t, s)
+            actions = brownian(env_map, senses, memory, base_policy, t, s)
         else:
             print(f'Calling MAR from cluster_plan')
             print(a_info)
