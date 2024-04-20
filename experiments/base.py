@@ -43,6 +43,7 @@ def defaults(shared=Settings()):
         # Clustering
         cluster_rounds=8,
         cluster_plan_rounds_max=32,
+        cluster_max_depth=9,
         queue_cluster_actions=False, # If we count communication and cluster formation as empty actions
             
         # Debugging/analysis options

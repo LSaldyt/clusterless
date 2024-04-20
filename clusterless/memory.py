@@ -37,6 +37,15 @@ def init_memory(env_map, s):
                        np.full(env_map.grid.shape, 0)) 
             for k in env_map.agents_info.codes}
 
+def map_for_simulate(mem, s):
+    ''' Remove old agents when maps are being used for simulation. Not compatible with beliefs '''
+    clone  = mem.map.clone()
+    latest = np.max(mem.time)
+    agents = clone.grid >= s.codes['agent']
+    clone.grid = np.where(agents, np.where(mem.time == latest, clone.grid, s.codes['empty']), clone.grid)
+    clone.set_at(clone.at('unseen'), s.codes['obstacle'])
+    return clone
+
 def sense_environment(env_map, memory, s, timestep):
     a_info = env_map.agents_info
     for c, (xy, view_coords, view) in zip(a_info.codes, views(env_map, s)): 

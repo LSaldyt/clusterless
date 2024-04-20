@@ -1,9 +1,10 @@
 from clusterless.policies.wave import wave
 from experiments.base import defaults
 
-from clusterless.memory   import init_memory, sense_environment, communicate
-from clusterless.scenario import from_unicode
-from clusterless.clusters import clustered_multiagent_rollout 
+from clusterless.memory      import init_memory, sense_environment, communicate
+from clusterless.scenario    import from_unicode
+from clusterless.clusters    import clustered_multiagent_rollout 
+from clusterless.environment import transition
 
 from experiments.base     import defaults
 
@@ -36,6 +37,11 @@ def run():
     base_policy = wave
 
     actions = clustered_multiagent_rollout(map, senses, memory, base_policy, s, 0)
-    print(actions)
-    # communicate(memory, senses, s)
+    try:
+        for action in actions:
+            # print(action)
+            transition(map, action, s)
+            map.color_render()
+    except:
+        pass
 
