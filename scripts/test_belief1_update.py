@@ -144,15 +144,9 @@ def update_belief_from_ground_truth(b1_b0s, b1_probabilties, sense):
     # In the future, this portion will be replaced with actual updating via rollout
     b1_probabilties[:,1][np.isin(b1_probabilties[:,0], agents, invert=True)]=0
 
-    # assert(np.sum)
-
-    print(np.bincount(b1_probabilties[:,1],weights=b1_probabilties[:,0]))
-
     # Deleting thresholded agents as if they never existed at all
     dump_thresholded(b1_b0s[:,:,:,0])
     b1_probabilties[:,1] = np.where(b1_probabilties[:,1]<threshold_value,0, b1_probabilties[:,1])
     
 
-    # TODO make sure that updating actually makes sense.
-    # IN particular, the sum of a single agent id's probabilities must add up to 1
-    # So, when we update 
+    # TODO assert that for each agent, the b1_probs sum to at most 1 
