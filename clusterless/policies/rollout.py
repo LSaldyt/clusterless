@@ -22,20 +22,24 @@ def rollout(map, sense_info, memory, base_policy, t, s):
     return actions
 
 def cost_to_go(env_map, policy, horizon, s):
-    results = simulate(env_map, policy, policy, horizon,
-                       0, s, check_goals=True, check_cycles=False)
+    results = simulate(env_map, policy, policy, horizon, s, check_goals=True, check_cycles=False)
     return results
 
 def egocentric_rollout(mem, codes, future_actions, base_policy, agent_code, t, s):    
     ''' Egocentric 1-step lookahead with truncated rollout
         Requires s to define a base policy '''
     values  = np.zeros(s.action_space.shape[0], dtype=np.float32)
-    ego_i   = codes.index(agent_code)
     mem_map = map_for_simulate(mem, s, duplicates_only=s.rollout_duplicates_only)
     a_info  = mem_map.agents_info
     if a_info.n_agents == 0:
         return s.action_space[-1, :]
+    sense_codes    = a_info.codes
+    matching_codes = [c in sense_codes for c in codes]
+    # Prune future actions for agents we don't know about!!
+    future_actions = future_actions[np.arange(len(codes))[matching_codes]]
     assert future_actions.shape[0] == a_info.n_agents, f'actions = {future_actions.shape}[0] != {a_info.n_agents}'
+
+    ego_i = list(sense_codes).index(agent_code)
 
     for j, action in enumerate(s.action_space):
         future_actions[ego_i, :] = action
