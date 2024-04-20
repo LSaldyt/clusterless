@@ -1,0 +1,2 @@
+#!/bin/bash
+squeue --format="%.10i %.35j %.8T %.10M " -u lsaldyt -i 1

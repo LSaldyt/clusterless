@@ -6,7 +6,6 @@ BATCH_FILE = 'temp_batch'
 
 SHARED = '''#!/bin/bash
 #SBATCH -p {partition}
-#SBATCH -q {qos}
 #SBATCH -t {days}-{hours:0>2}:{minutes:0>2}:00   # time in d-hh:mm:ss
 #SBATCH -o /scratch/{asurite}/experiments/{name}/%j.out # file to save job's STDOUT (%j = JobId)
 #SBATCH -e /scratch/{asurite}/experiments/{name}/%j.err # file to save job's STDERR (%j = JobId)
@@ -54,7 +53,6 @@ possible = dict(normal=dict(days=7,
                            hours=0,
                            minutes=0,
                            name='default',
-                           qos='normal',
                            nodes=1,
                            cores=8,
                            partition='general',

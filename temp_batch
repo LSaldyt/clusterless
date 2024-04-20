@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH -p general
+#SBATCH -t 7-00:00:00   # time in d-hh:mm:ss
+#SBATCH -o /scratch/lsaldyt/experiments/test_circle/%j.out # file to save job's STDOUT (%j = JobId)
+#SBATCH -e /scratch/lsaldyt/experiments/test_circle/%j.err # file to save job's STDERR (%j = JobId)
+#SBATCH --mail-user=lsaldyt@asu.edu # Mail-to address
+#SBATCH --mail-type=ALL  # Send an e-mail when a job starts, stops, or fails 
+#SBATCH -N 1 
+#SBATCH -c 8
+#SBATCH --job-name=test_circle
+
+#SBATCH --mem=25G
+./run test_circle 
