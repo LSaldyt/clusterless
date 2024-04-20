@@ -68,11 +68,12 @@ def share_memory(leader, cluster, depths, memory, s):
 def cluster_plan(cluster, local, memory, base_policy, s, t):
     ''' Run MAR within a cluster until all goals are reached or we timeout '''
     env_map = local.memory.map
-    env_map.color_render()
     for r in range(s.cluster_plan_rounds_max):
         env_map = map_for_simulate(Memory(env_map, local.memory.time), s, duplicates_only=True)
         a_info  = env_map.agents_info
-        senses  = list(sense_environment(env_map, memory, s, t))
+        senses  = list(sense_environment(env_map, memory, s, t + r))
+        env_map.color_render()
+        print(a_info)
         # TODO: Filter non-cluster members. must be propagated to env_map as well. 
         # I feel that simulating them in rollouts is actually more principled, but it should be a toggle
         # f_senses = [sense for sense in senses if sense.code in set(cluster)] # Filter non-cluster members
@@ -84,8 +85,6 @@ def cluster_plan(cluster, local, memory, base_policy, s, t):
         if cluster.shape[0] == 1: # Singleton clusters (no goals)
             actions = brownian(env_map, senses, memory, base_policy, t, s)
         else:
-            print(f'Calling MAR from cluster_plan')
-            print(a_info)
             actions = multiagent_rollout(env_map, senses, memory, base_policy, t, s) 
 
         code_mask  = np.array([sen.code in a_info.codes for sen in senses])
@@ -94,7 +93,6 @@ def cluster_plan(cluster, local, memory, base_policy, s, t):
         empty[ind] = actions
 
         transition(env_map, empty, s)
-        env_map.color_render()
         yield ind, actions
 
 def clustered_multiagent_rollout(env_map, input_senses, memory, base_policy, s, t):

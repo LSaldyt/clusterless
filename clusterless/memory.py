@@ -45,16 +45,28 @@ def map_for_simulate(mem, s, duplicates_only=False):
     latest = np.max(mem.time)
     agents = clone.grid >= s.codes['agent']
     if duplicates_only:
-        for agent_code in mem.map.agents_info.codes:
+        # print(f'Removing duplicates from memory')
+        # clone.color_render()
+        # print(clone.agents_info.codes)
+        for agent_code in set(clone.agents_info.codes):
+            # print(f'agent code', agent_code)
             copy_mask    = clone.grid == agent_code
             agent_latest = np.max(mem.time[copy_mask])
+            # print(f'latest', agent_latest)
+            # print('grid codes', clone.grid[copy_mask])
+            # print('grid times', mem.time[copy_mask])
             clone.grid[copy_mask] = np.where(mem.time[copy_mask] == agent_latest, agent_code, s.codes['empty'])
+        # print('Resulting agent location codes:')
+        # print(clone.grid[agents])
+        # clone.color_render()
     else:
         clone.grid = np.where(agents, np.where(mem.time == latest, clone.grid, s.codes['empty']), clone.grid)
     clone.set_at(clone.at('unseen'), s.codes['obstacle'])
     clone._inc_purity()
+    # print(clone.agents_info.codes)
     # print('AFTER')
     # clone.color_render()
+    assert (np.unique(clone.agents_info.codes, return_counts=True)[-1] == 1).all(), f'Failed to make grid entirely unique'
     return clone
 
 def sense_environment(env_map, memory, s, timestep):
