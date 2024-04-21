@@ -27,7 +27,7 @@ world_str = '''
 '''
 
 other_agent_code  = 4
-other_agent_index = 1 # HARDCODED for now, TODO In general run for all indices in arbitrary order
+other_agent_index = 0 # HARDCODED for now, TODO In general run for all indices in arbitrary order
 
 from clusterless.belief import *
 

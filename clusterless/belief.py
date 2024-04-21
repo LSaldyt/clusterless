@@ -150,6 +150,7 @@ def add_sample_to_intermediate_belief(s, sample, intermediate_action_probabiliti
     intermediate_b1_b0s[...,action_number] += update
 
 def update_belief_from_simulation(s, belief, int_b1_b0s, int_action_probs, agent_index, agent_code):
+    # print(f"updating agent {agent_code} at index {agent_index}")
     old_loc = np.copy(belief.friends_dist[agent_index,2:])
     # print(old_loc)
     # print(agent_code)
