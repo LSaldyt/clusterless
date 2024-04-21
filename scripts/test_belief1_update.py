@@ -10,6 +10,10 @@ from clusterless import utils
 
 from clusterless.monte_carlo import generate_worlds
 
+from clusterless.map import Map
+
+from clusterless.monte_carlo import emplace
+
 world_str = '''
 ·········
 ·········
@@ -23,7 +27,7 @@ world_str = '''
 '''
 
 other_agent_code  = 4
-other_agent_index = 0 # HARDCODED for now, TODO In general run for all indices in arbitrary order
+other_agent_index = 1 # HARDCODED for now, TODO In general run for all indices in arbitrary order
 
 from clusterless.belief import *
 
@@ -60,8 +64,15 @@ def run():
     # This will need to save before the whole run so that we remember previous probs
     previous_probability = old_friends[other_agent_index][1]
 
+    print("eyes closed:")
+    generate_phis(s, belief, 1, 3)
+    
+
     # Update everything that's certain. No hallucinations here
     update_belief_from_ground_truth(s, belief, senses[0])
+
+    print("ground truth update:")
+    generate_phis(s, belief, 1, 3)
 
     # Zero out anything in previous probabilities that we're certain about rn
     # That way we won't touch it when we update from data.
@@ -134,5 +145,28 @@ def run():
     update_belief_from_simulation(s, belief, int_b1_b0s, int_action_probs, other_agent_index, other_agent_code)
 
     belief.show(s)
+
+    generate_phis(s, belief, 0, 3)
     
+def generate_phis(s, belief, agent_index, num_samples):
+    b0 = belief.beliefs
+    b0 = b0[...,0]
+    # For a given agent's b0, generate the phis we'll emplace into our worlds
+
+    #yea... this is copy paste and needs to be fixed TODO but belief structure is awk for priors rn
+    prior = np.full((s.size,s.size,4), list(s.probs.values()))
+    prior[:,:,3] = np.where(prior[:,:,3] < s.belief_threshold, 0, prior[:,:,3]) # KILL!
+    prior[:,:,0] += 1-np.sum(prior, axis=2)
+    b0_mask = (b0 == prior).all(axis=2)
+    print(b0[...,2])
+    print(b0_mask)
+
+    for _ in range(num_samples):
+        pre_map = np.zeros((s.size,s.size))
+        random_from_probs = lambda probs: s.gen.choice(np.arange(len(s.probs)), size=1, p=probs)
+        random_map = np.apply_along_axis(random_from_probs, 2,b0)
+        random_map = np.squeeze(random_map)
+        yield b0_mask, random_map
+
+    # exit()
 
