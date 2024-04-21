@@ -17,8 +17,25 @@ class Belief():
         self.beliefs      = np.full((s.size,s.size,4,s.belief_max_friends+1), 
                                     np.full((s.belief_max_friends+1,4),[1,0,0,0]).transpose(), 
                                     dtype=float)
-        self.beliefs[:,:,:,0] = self.init_belief0(s)
+        self.level_0 = self.init_belief0(s)
         assert (np.sum(self.beliefs, axis=2) == 1).all()
+
+    # These are tedious to define, but let us abstract the underlying numpy array implementation
+    @property
+    def level_0(self):
+        return self.beliefs[:,:,:,0]  # type: ignore
+
+    @level_0.setter
+    def level_0(self, value):
+        self.beliefs[:,:,:,0] = value # type: ignore
+
+    @property
+    def level_1(self):
+        return self.beliefs[:,:,:,1:]  # type: ignore
+
+    @level_1.setter
+    def level_1(self, value):
+        self.beliefs[:,:,:,1:] = value # type: ignore
 
     def show(self, s):
         print("Time t=0")
@@ -29,7 +46,7 @@ class Belief():
                 print(f"I believe in {int(self.friends_dist[x,0])} (P={self.friends_dist[x,1]}) at location {self.friends_dist[x,2:]}") # type: ignore
 
     def to_grid(self):
-        return np.argmax(self.beliefs[:, :, :, 0], axis=-1) # type: ignore
+        return np.argmax(self.level_0, axis=-1) # type: ignore
 
     def init_belief0(self, s):
         # Initialize belief from probabilities dictionary
@@ -62,6 +79,20 @@ def render_beliefs(beliefs, s):
     rich.print(utils.horizontal_join(descriptions))
     print()
 
+def render_belief_dists(b0, s):
+    from .map import render
+    rendered     = [(' ' * s.size + '\n') * s.size]
+    descriptions = [f'{d:<{s.size}}' for d in ('', 'empty', 'obs', 'goal', 'agent')]
+    for c in range(4):
+        p       = b0[:, :, c]
+        choices = np.arange(8)
+        conds   = [p < 0.05, p < 0.15, p < 0.3, p < 0.5, p < 0.65, p < 0.8, p < 0.99, p < 1.01]
+        codes   = np.select(conds, choices, default=0) # type: ignore
+        rendered.append(render(codes, s.dist_symbols))
+    rich.print(utils.horizontal_join(rendered))
+    rich.print(utils.horizontal_join(descriptions))
+    print()
+
 def update_belief_from_ground_truth(s, belief, sense):
     # NOTE that this does not include ALL belief updating.
     #      Some may be done by rollout
@@ -85,7 +116,7 @@ def update_belief_from_ground_truth(s, belief, sense):
 
     belief_update      = utils.broadcast(b0_grid,4) == np.arange(4)
     belief_update_mask = utils.broadcast(np.max(belief_update,axis=2),4)
-    belief.beliefs[:,:,:,0][belief_update_mask] = belief_update[belief_update_mask]
+    belief.level_0[belief_update_mask] = belief_update[belief_update_mask]
     assert(np.sum(belief.beliefs, axis=2)==1).all()
 
     # Agents we can see, we believe in absolutely
@@ -108,7 +139,7 @@ def update_belief_from_ground_truth(s, belief, sense):
         belief.friends_dist[argmin_probability,:] = np.array([agent,1,x,y]) 
         # Then replace the corresponding view of belief.beliefs with the reasoning agent's b0
         #      that is, with a copy of our newly updated belief.beliefs[:,:,:,0]
-        belief.beliefs[:,:,:,argmin_probability+1] = belief.beliefs[:,:,:,0]
+        belief.beliefs[:,:,:,argmin_probability+1] = belief.level_0
     assert (np.sum(belief.beliefs, axis=2)==1).all()
 
 # ---Notes on the full version---
