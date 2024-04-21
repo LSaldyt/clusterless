@@ -136,7 +136,7 @@ def normalize_sampled_belief(intermediate_action_probabilities, intermediate_b1_
     intermediate_action_probabilities /= np.sum(intermediate_action_probabilities)
     intermediate_action_probabilities *= previous_probability
     # Note that this is normalized relative to the action taken! So we only divide by a subset of worlds
-    sum_b0_b1s = broadcast(np.sum(intermediate_b1_b0s,2),4,axis=2)
+    sum_b0_b1s = utils.broadcast(np.sum(intermediate_b1_b0s,2),4,axis=2)
     with np.errstate(divide='ignore',invalid='ignore'):
         intermediate_b1_b0s[...] = np.where(sum_b0_b1s>0,intermediate_b1_b0s/sum_b0_b1s,0)*previous_probability
 
@@ -146,7 +146,7 @@ def add_sample_to_intermediate_belief(s, sample, intermediate_action_probabiliti
 
     #TODO clean up the sample first 
     # TODO split off the cleaning up function so it can be shared with ground truth update
-    update = broadcast(sample[0],4) == np.arange(4)
+    update = utils.broadcast(sample[0],4) == np.arange(4)
     intermediate_b1_b0s[...,action_number] += update
 
 def update_belief_from_simulation(s, belief, int_b1_b0s, int_action_probs, agent_index, agent_code):
@@ -176,7 +176,7 @@ def update_belief_for_agent_location(s,b1_slice, int_b1_slice, action_probs_slic
     x, y = s.action_space[action_num]
     action_probs_slice[2] = (old_location[1] + y)%s.size
     action_probs_slice[3] = (old_location[0] + x)%s.size
-    update_mask = broadcast(np.sum(int_b1_slice,2),4,axis=2) ==1
+    update_mask = utils.broadcast(np.sum(int_b1_slice,2),4,axis=2) ==1
     b1_slice[update_mask] = int_b1_slice[update_mask]
 
 def b0_to_map(b0):
