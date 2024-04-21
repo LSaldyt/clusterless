@@ -112,7 +112,7 @@ def simulate(env_map, policy, base_policy, timesteps, s,
         if ((check_goals and remaining_goals == 0) 
             or env_map.agents_info.n_agents == 0):
             sense_input = list(sense_environment(env_map, memory, s, t))
-            step_count  = t + 1 if remaining_goals == 0 else timesteps
+            step_count  = t + 1 # if remaining_goals == 0 else timesteps
             break
 
     if do_render:
