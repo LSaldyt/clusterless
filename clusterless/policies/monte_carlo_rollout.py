@@ -12,6 +12,7 @@ def monte_carlo_rollout(map, sense_info, input_memory, base_policy, t, s):
     for i, sense in enumerate(sense_info):
         world_acts = np.zeros((s.n_worlds, 2))
         world_vals = np.zeros(s.n_worlds)
+        eventual_worlds = []
 
         for w, world in enumerate(generate_worlds(s)):
             memory = deepcopy(input_memory)
@@ -37,11 +38,13 @@ def monte_carlo_rollout(map, sense_info, input_memory, base_policy, t, s):
             world_acts[w, :] = act
             world_vals[w]    = val
             # print(world_acts)
+            # eventual_worlds.append(last_world_from_rollout_simulation)
         # print(world_acts)
         # print(world_vals)
 
         best_w        = np.argmax(world_vals)
         actions[i, :] = world_acts[best_w, :]
         # print(best_w)
+        # new_belief = belief_update(blah, blah, eventual_worlds)
     # print(actions)
     return actions
