@@ -28,7 +28,8 @@ world_str = '''
 threshold_value = 0.1
 memory_bound = 7
 
-other_agent = 4
+other_agent_code = 4
+other_agent_index = 0
 
 def run():
     s   = defaults().derive(size=9, view_size=2, n_worlds=3)
@@ -85,9 +86,9 @@ def run():
     agents = agents[np.logical_and(agents!=senses[0].code,agents>=3)]
     previous_b1_probabilities[:,1][~np.isin(b1_probabilities[:,0], agents, invert=True)]=0
 
-    for x in range(memory_bound):
-        if b1_probabilities[x,1]:
-            print(f"I believe in {int(b1_probabilities[x,0])} (P={b1_probabilities[x,1]}) at location {b1_probabilities[x,2:]}")
+    # for x in range(memory_bound):
+    #     if b1_probabilities[x,1]:
+    #         print(f"I believe in {int(b1_probabilities[x,0])} (P={b1_probabilities[x,1]}) at location {b1_probabilities[x,2:]}")
 
     # Now that we've taken into account solid, absolute reality, we have to do some 
     #     kind of calculation to update our uncertain cells.
@@ -117,7 +118,7 @@ def run():
     a_info = map.agents_info
     view_fn      = getattr(utils, s.view_type)
     view_offsets = view_fn(s.view_size)
-    view_coords    = view_offsets + b1_probabilities[other_agent,2:].astype(int)
+    view_coords    = view_offsets + b1_probabilities[other_agent_code,2:].astype(int)
     view_coords    = view_coords % map.grid.shape[0]
     # Get my certainties from my b0. We'll remove these from phi
     certainties = np.logical_and.reduce(b1_b0s[...,0] != 1,axis=2)
@@ -141,7 +142,7 @@ def run():
     # Now we create the new b1 sub states
     # NOTE that we pass in the INDEX of the agent-location, rather than merely the agent code.
     #      These are meaningfully different, as we are keeping track of a belief-history, not just a belief 
-    update_belief_from_simulation(s,b1_b0s, b1_probabilities, int_b1_b0s, int_action_probs, 1, other_agent)
+    update_belief_from_simulation(s,b1_b0s, b1_probabilities, int_b1_b0s, int_action_probs, other_agent_index, other_agent_code)
 
     print("Time t=0")
     print("Level 0 Belief:")
@@ -256,17 +257,20 @@ def add_sample_to_intermediate_belief(s, sample, intermediate_action_probabiliti
     intermediate_b1_b0s[...,action_number] += update
 
 def update_belief_from_simulation(s,b1_b0s, b1_probabilities, int_b1_b0s, int_action_probs, agent_index, agent_code):
-    old_loc = b1_probabilities[agent_index,2:]
-    print(old_loc)
-    print(agent_code)
-    print(s.symbols[agent_code])
-    print(b1_probabilities)
+    old_loc = np.copy(b1_probabilities[agent_index,2:])
+    # print(old_loc)
+    # print(agent_code)
+    # print(s.symbols[agent_code])
+    # print(b1_probabilities)
     update_belief_for_agent_location(s,b1_b0s[:,:,:,agent_index], int_b1_b0s[...,4],b1_probabilities[agent_index,:],int_action_probs[4],agent_code,4,old_loc)
-    print(b1_probabilities)
+    # print(b1_probabilities)
+
     # Only overwrite the lowest probability slices, and only do so if the new data is higher probability
     # THIS MAY HAVE PROBLEMS. In particular, if the order of the agents is weird, one high prob could get smeared out and dumped even though another (earlier updated)
     #      had a higher probability agent-location.
     # For now, oh well... Later: TODO fix or find a better way to structure this??
+    
+    # print(old_loc)
     for action_num in range(4):
         worst = np.min(b1_probabilities[:,1])
         worst_index = np.argmin(b1_probabilities[:,1])
@@ -277,9 +281,8 @@ def update_belief_for_agent_location(s,b1_slice, int_b1_slice, action_probs_slic
     action_probs_slice[0] = agent_code
     action_probs_slice[1] = int_action_probs_slice
     x, y = s.action_space[action_num]
-    print(f"{x} and {y}")
-    action_probs_slice[2] = (old_location[0] + x)%s.size
-    action_probs_slice[3] = (old_location[1] + y)%s.size
+    action_probs_slice[2] = (old_location[1] + y)%s.size
+    action_probs_slice[3] = (old_location[0] + x)%s.size
     update_mask = broadcast(np.sum(int_b1_slice,2),4,axis=2) ==1
     b1_slice[update_mask] = int_b1_slice[update_mask]
 
