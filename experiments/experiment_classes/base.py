@@ -23,14 +23,14 @@ class BaseExperiment(Experiment):
                  for i_r in range(s.environment_samples)]
 
         with Progress() as progress:
-            map_task = progress.add_task('Maps', total=s.environment_samples)
+            map_task = progress.add_task(f'Maps ({s.environment_samples})', total=s.environment_samples)
             env_task = None
             pol_task = None
 
             for i_r, map in maps:
-                env_task = replace_task(progress, env_task, f'Env ({s.policy})', total=s.timesteps)
+                env_task = replace_task(progress, env_task, f'Env {i_r}', total=s.timesteps)
                 for policy_key in policies:
-                    pol_task    = replace_task(progress, pol_task, 'Policy', total=len(policies))
+                    pol_task    = replace_task(progress, pol_task, f'Policy {policy_key}', total=len(policies))
                     policy      = available_policies[policy_key]
                     base_policy = available_policies[s.base_policy]
                     if s.selected_env != -1:

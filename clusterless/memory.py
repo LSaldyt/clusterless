@@ -40,6 +40,9 @@ def init_memory(env_map, s):
 def map_for_simulate(mem, s, duplicates_only=False, mask_unseen=True):
     ''' Remove old agents when maps are being used for simulation. Not compatible with beliefs '''
     clone  = mem.map.clone()
+    # print('before')
+    # clone.color_render()
+    # print(mem.time)
     latest = np.max(mem.time)
     agents = clone.grid >= s.codes['agent']
     if duplicates_only:
@@ -52,7 +55,16 @@ def map_for_simulate(mem, s, duplicates_only=False, mask_unseen=True):
     if mask_unseen:
         clone.set_at(clone.at('unseen'), s.codes['obstacle'])
     clone._inc_purity()
-    assert (np.unique(clone.agents_info.codes, return_counts=True)[-1] == 1).all(), f'Failed to make grid entirely unique! This indicates a likely issue with timecodes/horizon values used in tracking memory recency.'
+    # print('after')
+    # clone.color_render()
+    is_unique = (np.unique(clone.agents_info.codes, return_counts=True)[-1] == 1).all()
+    if not is_unique:
+        print('before')
+        mem.map.color_render()
+        print(mem.time)
+        print('after')
+        clone.color_render()
+    assert is_unique, f'Failed to make grid entirely unique! This indicates a likely issue with timecodes/horizon values used in tracking memory recency.'
     return clone
 
 def sense_environment(env_map, memory, s, timestep):

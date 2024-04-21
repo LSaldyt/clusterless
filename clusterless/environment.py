@@ -109,10 +109,10 @@ def simulate(env_map, policy, base_policy, timesteps, s,
             wait=(actions == 0).all(), 
             n_moves=np.sum(np.abs(actions)), **info, **extra))
 
-        # if ((check_goals and remaining_goals == 0) 
-        #     or env_map.agents_info.n_agents == 0):
-        #     step_count  = t + 1 # if remaining_goals == 0 else timesteps
-        #     break
+        if ((check_goals and remaining_goals == 0) 
+            or env_map.agents_info.n_agents == 0):
+            step_count  = t + 1 # if remaining_goals == 0 else timesteps
+            break
 
     if do_render:
         pprint(map_hashes)

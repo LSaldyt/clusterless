@@ -28,6 +28,11 @@ def render(mx, syms, colors=None):
             yield '\n'
     return ''.join(gen_syms())
 
+def render_time(time, s):
+    max_t   = np.max(time)
+    time_mx = np.where(time == max_t, 1, 0)
+    return render(time_mx, s.time_symbols)
+
 AgentsInfo = namedtuple('AgentsInfo', ['codes', 'coords', 'n_agents'])
 
 class Map():
@@ -62,14 +67,18 @@ class Map():
         s = self.settings
         rendered_views = [(' ' * s.view_size + '\n') * s.view_size]
         rendered_grids = [self.color_render(show=False)]
+        rendered_times = [render_time(np.zeros_like(self.grid), s)]
         codes          = []
         for sense in sorted(sense_input, key=lambda sense : sense.code): 
             # TODO emplace circular views and render them if desired
             # rendered_views.append(render(sense.view,         s.symbols))
             rendered_grids.append(sense.memory.map.color_render(show=False))
             codes.append(f'agent {s.symbols[sense.code]}')
+            rendered_times.append(render_time(sense.memory.time, s))
         descriptions   = [f'{name:<{s.size}}\n' for name in ['full'] + codes]
         rich.print(utils.horizontal_join(rendered_grids))
+        if s.render_time:
+            rich.print(utils.horizontal_join(rendered_times))
         rich.print(utils.horizontal_join(descriptions))
         # print(utils.horizontal_join(rendered_views, join=' ' * (s.size - s.view_size + 1)))
 

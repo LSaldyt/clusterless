@@ -56,13 +56,13 @@ def egocentric_rollout(ground_truth_map, mem, codes, memory, given_actions, base
     for j, action in enumerate(s.action_space):
         next_map  = mem_map.clone()
         # print('*' * 80)
-        # print(f'Imagined ROLLOUT for ', s.action_words[j], action)
         future_actions[ego_i, :] = action
         code_mask = np.array([c in next_map.agents_info.codes for c in a_info.codes]) # So we remove unseen agents
         acts      = future_actions[np.arange(a_info.n_agents)[code_mask]]
         info      = transition(next_map, acts, s) # Modifies next_map
         horizon   = np.minimum(s.timesteps - t, s.truncated_timesteps)
-        remain    = cost_to_go(next_map, memory, base_policy, horizon, s, do_render=False, start_t=t, mask_unseen=mask_unseen)
+        senses    = list(sense_environment(next_map, memory, s, t + 1))
+        remain    = cost_to_go(next_map, memory, base_policy, horizon, s, do_render=False, start_t=t+1, mask_unseen=mask_unseen)
 
         # print(s.action_words[j])
         # print(f'Rollout end map!')

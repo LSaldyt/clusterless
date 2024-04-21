@@ -35,6 +35,8 @@ def defaults(shared=Settings()):
         symbols = '·□★' + ('ζξΞѯƔȣ☭' + '♔♕♖♗♘♙♚♛♜♝♞♟' + string.ascii_lowercase + string.ascii_uppercase) + '?☠', 
         colors  = ['', '', 'gold3'] + agent_colors * 100 + ['', 'dark_red'],
 
+        time_symbols = ' ⁕',
+
         # Environment settings
         gen     = np.random.default_rng(2024),
         probs   = dict(empty=0.53, obstacle=0.25, goal=0.2, agent=0.02), # Order matters! Agents come last
@@ -77,6 +79,8 @@ def defaults(shared=Settings()):
         # Debugging/analysis options
         selected_env=-1,
         single_agent=False,
+
+        render_time=False,
 
         debug=False,
         debug_trace_depth=4,
