@@ -64,15 +64,8 @@ def run():
     # This will need to save before the whole run so that we remember previous probs
     previous_probability = old_friends[other_agent_index][1]
 
-    print("eyes closed:")
-    generate_phis(s, belief, 1, 3)
-    
-
     # Update everything that's certain. No hallucinations here
     update_belief_from_ground_truth(s, belief, senses[0])
-
-    print("ground truth update:")
-    generate_phis(s, belief, 1, 3)
 
     # Zero out anything in previous probabilities that we're certain about rn
     # That way we won't touch it when we update from data.
