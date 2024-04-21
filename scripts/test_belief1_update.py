@@ -75,6 +75,9 @@ def run():
     #      (Except in cases where we know exactly what the ground truth is now)
     previous_b1_probabilities = b1_probabilities.copy()
 
+    # This will need to save before the whole run so that we remember previous probs
+    previous_probability = previous_b1_probabilities[other_agent_index][1]
+
     # Update everything that's certain. No hallucinations here
     update_belief_from_ground_truth(s,b1_b0s, b1_probabilities, senses[0])
 
@@ -137,14 +140,14 @@ def run():
     for sample in test_samples:
         add_sample_to_intermediate_belief(s,sample,int_action_probs, int_b1_b0s)
 
-    normalize_sampled_belief(int_action_probs, int_b1_b0s)
+    normalize_sampled_belief(int_action_probs, int_b1_b0s, previous_probability)
 
     # Now we create the new b1 sub states
     # NOTE that we pass in the INDEX of the agent-location, rather than merely the agent code.
     #      These are meaningfully different, as we are keeping track of a belief-history, not just a belief 
     update_belief_from_simulation(s,b1_b0s, b1_probabilities, int_b1_b0s, int_action_probs, other_agent_index, other_agent_code)
 
-    print("Time t=0")
+    print("Time t=1")
     print("Level 0 Belief:")
     # print(b1_b0s[:,:,:,0])
     print("Level 1 Belief:")
@@ -238,14 +241,15 @@ def initialize_intermediate_belief(s):
     intermediate_b1_b0s = np.zeros((s.size, s.size, 4, 5))
     return intermediate_action_probabilities, intermediate_b1_b0s
 
-def normalize_sampled_belief(intermediate_action_probabilities, intermediate_b1_b0s):
+def normalize_sampled_belief(intermediate_action_probabilities, intermediate_b1_b0s, previous_probability):
     # NOTE: the order of these tensors is the same as the order of actions in s.action_space
     #       up, down, left, right, stay
     intermediate_action_probabilities /= np.sum(intermediate_action_probabilities)
+    intermediate_action_probabilities *= previous_probability
     # Note that this is normalized relative to the action taken! So we only divide by a subset of worlds
     sum_b0_b1s = broadcast(np.sum(intermediate_b1_b0s,2),4,axis=2)
     with np.errstate(divide='ignore',invalid='ignore'):
-        intermediate_b1_b0s[...] = np.where(sum_b0_b1s>0,intermediate_b1_b0s/sum_b0_b1s,0)
+        intermediate_b1_b0s[...] = np.where(sum_b0_b1s>0,intermediate_b1_b0s/sum_b0_b1s,0)*previous_probability
 
 def add_sample_to_intermediate_belief(s, sample, intermediate_action_probabilities, intermediate_b1_b0s):
     action_number = s.action_number_lookup[tuple(sample[1])]
