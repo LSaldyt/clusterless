@@ -13,7 +13,11 @@ class BaseExperiment(Experiment):
     def run(self, *args, **kwargs):
         self.ensure(**kwargs, log_fn=self.log) # e.g. timesteps=8
         s        = self.settings # Shorthand
-        policies = s.policy.split(',') # Can run multiple policies in one experiment
+        # We can run multiple policies in one experiment
+        if isinstance(s.policy, tuple):
+            policies = s.policy
+        else:
+            policies = [s.policy]
 
         maps = [(i_r, Map(s))
                  for i_r in range(s.environment_samples)]
@@ -33,6 +37,8 @@ class BaseExperiment(Experiment):
                         if i_r != s.selected_env:
                             continue
                     if s.single_agent and map.agents_info.n_agents != 1:
+                        continue
+                    if s.exact_n_agents > 0 and s.exact_n_agents != map.agents_info.n_agents:
                         continue
                     stats = simulate(map, policy, base_policy, s.timesteps, s, do_render=s.do_render, 
                                      progress=progress, task=env_task, log_fn=self.log, extra=dict(policy=policy_key, env=i_r))

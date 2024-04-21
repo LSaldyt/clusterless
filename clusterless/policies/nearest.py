@@ -3,6 +3,8 @@ from collections import deque
 
 action_space = np.array([[0, 1], [1, 0], [-1, 0], [0, -1]])
 
+from .utils import empty_actions
+
 def nearest(map, sense_info, memory, base_policy, t, s):
     actions = empty_actions(len(sense_info))
     for i, sense in enumerate(sense_info):

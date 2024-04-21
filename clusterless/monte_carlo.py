@@ -27,4 +27,7 @@ def emplace(memory, world, s):
 def generate_worlds(s):
     ''' Simply generate n_worlds random worlds using probabilities in settings '''
     for _ in range(s.n_worlds):
-        yield Map(s)
+        env_map = Map(s)
+        if s.no_monte_carlo_agents:
+            env_map.grid = np.where(env_map.grid >= s.codes['agent'], s.codes['empty'], env_map.grid)
+        yield env_map

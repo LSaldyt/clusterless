@@ -62,6 +62,7 @@ def defaults(shared=Settings()):
 
         # Monte carlo
         n_worlds=16, 
+        no_monte_carlo_agents=True, # Do not hallucinate additional agents outside of belief-state induced predictions
 
         # Clustering
         cluster_rounds=8,
@@ -82,6 +83,7 @@ def defaults(shared=Settings()):
         debug_alt_nearest=True,
         detect_cycles=False,
         do_render=True,
+        exact_n_agents=-1
 
         )
     s.update(codes={
