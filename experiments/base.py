@@ -100,6 +100,7 @@ def defaults(shared=Settings()):
                  **{'dead'      : -1,
                     'unseen'    : -2}},
              action_lookup = {str(tuple(a)) : action_unicode[i] for i, a in enumerate(s.action_space)},
+             action_number_lookup = {str(tuple(a)) : i for i, a in enumerate(s.action_space)},
              )
     return s
 

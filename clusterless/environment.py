@@ -6,7 +6,7 @@ from . import utils
 from .utils import at_xy
 from .map import Map
 from .memory import init_memory, sense_environment
-from .belief import init_beliefs, update_belief_from_ground_truth
+from .belief import init_beliefs, update_belief_from_ground_truth, render_beliefs
 
 # TODO introduce a simulation settings type to consolidate this garbage :)
 # TODO Simplify this function and maybe remove about 10-20 lines
@@ -38,6 +38,8 @@ def simulate(env_map, policy, base_policy, timesteps, s,
         if do_render:
             print(f'Hash: {env_hash}')
             env_map.full_render(sense_input)
+            if track_beliefs:
+                render_beliefs(beliefs, s)
 
         try:
             actions = policy(env_map, sense_input, memory, base_policy, t, s)
@@ -55,7 +57,7 @@ def simulate(env_map, policy, base_policy, timesteps, s,
         remaining_goals = env_map.count('goal')
 
         if do_render:
-            print(f'Step: {t} {score} {info} env = {extra.get("env", "imagined")}')
+            print(f'Step: {t} score={score} {info} env = {extra.get("env", "imagined")}')
             action_repr = ' '.join(s.action_lookup[str(tuple(a))] for a in actions)
             print(f'Acts: {action_repr}')
             print('-' * 80)

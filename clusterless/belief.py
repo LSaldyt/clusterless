@@ -1,7 +1,8 @@
-from clusterless.utils import broadcast
-
+import rich
 import numpy as np
 import numpy.typing as npt
+
+from . import utils
 
 class Belief():
     friends_dist : npt.ArrayLike # (f, (code, existence_prob, x, y))
@@ -27,6 +28,9 @@ class Belief():
             if self.friends_dist[x,1]: # type: ignore
                 print(f"I believe in {int(self.friends_dist[x,0])} (P={self.friends_dist[x,1]}) at location {self.friends_dist[x,2:]}") # type: ignore
 
+    def to_grid(self):
+        return np.argmax(self.beliefs[:, :, :, 0], axis=-1) # type: ignore
+
     def init_belief0(self, s):
         # Initialize belief from probabilities dictionary
         # NOTE all other agents look the same from the pov of level 0
@@ -44,6 +48,19 @@ class Belief():
 
 def init_beliefs(env_map, s):
     return {k : Belief(s) for k in env_map.agents_info.codes}
+
+def render_beliefs(beliefs, s):
+    print(f'Belief states (argmax):')
+    from .map import Map
+    rendered     = [(' ' * s.size + '\n') * s.size]
+    descriptions = [' ' * s.size]
+    for c, belief in beliefs.items():
+        map = Map(s, belief.to_grid())
+        rendered.append(map.color_render(show=False))
+        descriptions.append(f'agent {s.symbols[c]}')
+    rich.print(utils.horizontal_join(rendered))
+    rich.print(utils.horizontal_join(descriptions))
+    print()
 
 def update_belief_from_ground_truth(s, belief, sense):
     # NOTE that this does not include ALL belief updating.
@@ -66,8 +83,8 @@ def update_belief_from_ground_truth(s, belief, sense):
     #    codes: 3,4,5,...
     b0_grid = np.where(update_grid>=3,3,update_grid)
 
-    belief_update      = broadcast(b0_grid,4) == np.arange(4)
-    belief_update_mask = broadcast(np.max(belief_update,axis=2),4)
+    belief_update      = utils.broadcast(b0_grid,4) == np.arange(4)
+    belief_update_mask = utils.broadcast(np.max(belief_update,axis=2),4)
     belief.beliefs[:,:,:,0][belief_update_mask] = belief_update[belief_update_mask]
     assert(np.sum(belief.beliefs, axis=2)==1).all()
 
@@ -124,7 +141,7 @@ def normalize_sampled_belief(intermediate_action_probabilities, intermediate_b1_
         intermediate_b1_b0s[...] = np.where(sum_b0_b1s>0,intermediate_b1_b0s/sum_b0_b1s,0)*previous_probability
 
 def add_sample_to_intermediate_belief(s, sample, intermediate_action_probabilities, intermediate_b1_b0s):
-    action_number = s.action_lookup[tuple(sample[1])]
+    action_number = s.action_number_lookup[str(tuple(sample[1]))]
     intermediate_action_probabilities[action_number] +=1
 
     #TODO clean up the sample first 
