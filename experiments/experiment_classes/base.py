@@ -11,7 +11,7 @@ def replace_task(progress, prev, *args, **kwargs):
 
 class BaseExperiment(Experiment):
     def run(self, *args, **kwargs):
-        self.ensure(**kwargs) # e.g. timesteps=8
+        self.ensure(**kwargs, log_fn=self.log) # e.g. timesteps=8
         s        = self.settings # Shorthand
         policies = s.policy.split(',') # Can run multiple policies in one experiment
 
@@ -26,7 +26,7 @@ class BaseExperiment(Experiment):
             for i_r, map in maps:
                 env_task = replace_task(progress, env_task, f'Env ({s.policy})', total=s.timesteps)
                 for policy_key in policies:
-                    pol_task    = replace_task(progress, pol_task, 'Policy', total=s.environment_samples)
+                    pol_task    = replace_task(progress, pol_task, 'Policy', total=len(policies))
                     policy      = available_policies[policy_key]
                     base_policy = available_policies[s.base_policy]
                     if s.selected_env != -1:
@@ -38,6 +38,6 @@ class BaseExperiment(Experiment):
                                      progress=progress, task=env_task, log_fn=self.log, extra=dict(policy=policy_key, env=i_r))
                     stats.update(environment_index=i_r, policy=policy_key)
                     self.log(f'summary', stats)
-
-                    progress.update(map_task, advance=1)
+                    progress.update(pol_task, advance=1)
+                progress.update(map_task, advance=1)
         print(f'Results saved in {self.instance_dir}')

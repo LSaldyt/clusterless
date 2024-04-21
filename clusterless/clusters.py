@@ -85,7 +85,7 @@ def cluster_plan(cluster, local, memory, base_policy, s, t):
         if cluster.shape[0] == 1: # Singleton clusters (no goals)
             actions = brownian(env_map, senses, memory, base_policy, t, s)
         else:
-            actions = multiagent_rollout(env_map, senses, memory, base_policy, t, s) 
+            actions = multiagent_rollout(env_map, senses, memory, base_policy, t, s, mask_unseen=True) 
 
         code_mask  = np.array([sen.code in a_info.codes for sen in senses])
         ind        = np.arange(a_info.n_agents)[code_mask]

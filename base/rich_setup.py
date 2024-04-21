@@ -7,6 +7,6 @@ from rich.pretty import pprint
 from rich import print
 FORMAT = "%(message)s"
 logging.basicConfig(
-    level="NOTSET", format=FORMAT, datefmt="[%X]", handlers=[RichHandler()]
+    level="INFO", format=FORMAT, datefmt="[%X]", handlers=[RichHandler()]
 )
 log = logging.getLogger("rich")

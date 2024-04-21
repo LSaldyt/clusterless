@@ -1,6 +1,5 @@
-from science import Settings, Experiment
+from science import Settings
 from .experiment_classes import BaseExperiment
-from clusterless.policies import available_policies
 
 import string
 import numpy as np
@@ -21,6 +20,9 @@ geom = (9600, 9726)
 misc = '✊⛽⛧ ⚰⚜⚕☸☘ ■ ▩ ⏳⏲⏱⏰⎈∾⁕'
 curs = 'ℋℐℒℓ℘ℛℨ'
 
+au = list(chr(a) for a in range(arrows[0], arrows[0] + 4))
+action_unicode = [au[i] for i in (1, 3, 0, 2)] + ['⏳']
+
 def defaults(shared=Settings()):
     agent_colors = ['red']
     # Default/common experiment settings
@@ -39,7 +41,7 @@ def defaults(shared=Settings()):
 
         # Scale parameters
         size                = 8,
-        truncated_timesteps = 16,
+        truncated_timesteps = 128,
         timesteps           = 128,
         environment_samples = 8,
 
@@ -66,7 +68,7 @@ def defaults(shared=Settings()):
         cluster_plan_rounds_max=32,
         cluster_max_depth=9,
         cluster_plan_duplicates_only=True, # Remove duplicates only when simulating from an agent's memory
-        queue_cluster_actions=False, # If we count communication and cluster formation as empty actions
+        queue_cluster_actions=False,       # If we count communication and cluster formation as empty actions
 
         rollout_duplicates_only=True, # Remove duplicates only when simulating from an agent's memory
         # Alternatively, remove all agents that aren't in the current timestep, e.g. forget about people out of view range
@@ -85,7 +87,9 @@ def defaults(shared=Settings()):
     s.update(codes={
                  **{k : i for i, k in enumerate(s.probs.keys())},
                  **{'dead'      : -1,
-                    'unseen'    : -2}})
+                    'unseen'    : -2}},
+             action_lookup = {str(tuple(a)) : action_unicode[i] for i, a in enumerate(s.action_space)}
+             )
     return s
 
 def define_experiments(registry):

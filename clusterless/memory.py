@@ -37,7 +37,7 @@ def init_memory(env_map, s):
                        np.full(env_map.grid.shape, 0)) 
             for k in env_map.agents_info.codes}
 
-def map_for_simulate(mem, s, duplicates_only=False):
+def map_for_simulate(mem, s, duplicates_only=False, mask_unseen=True):
     ''' Remove old agents when maps are being used for simulation. Not compatible with beliefs '''
     # print('BEFORE')
     # mem.map.color_render()
@@ -61,12 +61,13 @@ def map_for_simulate(mem, s, duplicates_only=False):
         # clone.color_render()
     else:
         clone.grid = np.where(agents, np.where(mem.time == latest, clone.grid, s.codes['empty']), clone.grid)
-    clone.set_at(clone.at('unseen'), s.codes['obstacle'])
+    if mask_unseen:
+        clone.set_at(clone.at('unseen'), s.codes['obstacle'])
     clone._inc_purity()
     # print(clone.agents_info.codes)
     # print('AFTER')
     # clone.color_render()
-    assert (np.unique(clone.agents_info.codes, return_counts=True)[-1] == 1).all(), f'Failed to make grid entirely unique'
+    assert (np.unique(clone.agents_info.codes, return_counts=True)[-1] == 1).all(), f'Failed to make grid entirely unique! This indicates a likely issue with timecodes/horizon values used in tracking memory recency.'
     return clone
 
 def sense_environment(env_map, memory, s, timestep):
