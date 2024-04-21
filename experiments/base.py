@@ -66,6 +66,11 @@ def defaults(shared=Settings()):
         n_worlds=16, 
         no_monte_carlo_agents=True, # Do not hallucinate additional agents outside of belief-state induced predictions
 
+        # Belief
+        belief_max_friends=7,
+        belief_threshold=0.1,
+        track_beliefs=True, # Could be broken out into a per-policy setting
+
         # Clustering
         cluster_rounds=8,
         cluster_plan_rounds_max=32,
@@ -95,7 +100,7 @@ def defaults(shared=Settings()):
                  **{'dead'      : -1,
                     'unseen'    : -2}},
              action_lookup = {str(tuple(a)) : action_unicode[i] for i, a in enumerate(s.action_space)},
-             action_number_lookup = {tuple(a): i for i,a in enumerate(s.action_space)}
+             action_number_lookup = {str(tuple(a)) : i for i, a in enumerate(s.action_space)},
              )
     return s
 

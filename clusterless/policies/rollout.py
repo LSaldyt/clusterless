@@ -28,7 +28,11 @@ def cost_to_go(env_map, memory, policy, horizon, s, do_render=False, start_t=0, 
     memory  = {c : Memory(map_for_simulate(mem, s, duplicates_only=s.rollout_duplicates_only, mask_unseen=mask_unseen),
                       mem.time)
                for c, mem in memory.items()}
-    results = simulate(env_map, policy, policy, horizon, s, check_goals=True, check_cycles=False, do_render=do_render, memory=memory, start_t=start_t)
+    results = simulate(env_map, policy, policy, horizon, s, 
+                       check_goals=True, check_cycles=False, 
+                       do_render=do_render, memory=memory, 
+                       start_t=start_t,
+                       track_beliefs=False) # Do NOT track beliefs within rollout!
     return results
 
 def egocentric_rollout(ground_truth_map, mem, codes, memory, given_actions, base_policy, agent_code, t, s, mask_unseen=False, reveal=False):    

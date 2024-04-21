@@ -41,7 +41,8 @@ class BaseExperiment(Experiment):
                     if s.exact_n_agents > 0 and s.exact_n_agents != map.agents_info.n_agents:
                         continue
                     stats = simulate(map, policy, base_policy, s.timesteps, s, do_render=s.do_render, 
-                                     progress=progress, task=env_task, log_fn=self.log, extra=dict(policy=policy_key, env=i_r))
+                                     progress=progress, task=env_task, log_fn=self.log, extra=dict(policy=policy_key, env=i_r),
+                                     track_beliefs=s.track_beliefs)
                     stats.update(environment_index=i_r, policy=policy_key)
                     self.log(f'summary', stats)
                     progress.update(pol_task, advance=1)
