@@ -42,6 +42,9 @@ class Belief():
         b0[:,:,0] += 1-np.sum(b0, axis=2)
         assert (np.sum(b0, axis=2)==1).all()
 
+def init_beliefs(env_map, s):
+    return {k : Belief(s) for k in env_map.agents_info.codes}
+
 def update_belief_from_ground_truth(s, belief, sense):
     # NOTE that this does not include ALL belief updating.
     #      Some may be done by rollout
@@ -121,7 +124,7 @@ def normalize_sampled_belief(intermediate_action_probabilities, intermediate_b1_
         intermediate_b1_b0s[...] = np.where(sum_b0_b1s>0,intermediate_b1_b0s/sum_b0_b1s,0)*previous_probability
 
 def add_sample_to_intermediate_belief(s, sample, intermediate_action_probabilities, intermediate_b1_b0s):
-    action_number = s.action_number_lookup[tuple(sample[1])]
+    action_number = s.action_lookup[tuple(sample[1])]
     intermediate_action_probabilities[action_number] +=1
 
     #TODO clean up the sample first 
