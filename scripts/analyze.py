@@ -3,7 +3,7 @@ from pathlib import Path
 import json
 from functools import reduce
 
-def run(exp='env_8', **kwargs):
+def get_latest(exp='env_8', **kwargs):
     parent = Path('data/experiments')
     exp    = parent / exp
     experiments = [p for p in exp.iterdir()]
@@ -22,6 +22,10 @@ def run(exp='env_8', **kwargs):
         print(f"data for {kwargs} not found")
         exit()
     print(stamp)
-    df = pd.read_csv(stamp / 'data/summary.csv')
+    return stamp
+
+def run(exp='env_8', **kwargs):
+    stamp = get_latest(exp, **kwargs)
+    df    = pd.read_csv(stamp / 'data/summary.csv')
     # print(df)
     print(df.describe())

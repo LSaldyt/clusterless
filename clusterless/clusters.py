@@ -8,7 +8,7 @@ from .utils  import broadcast
 from .memory import merge_memory, sense_environment, map_for_simulate, Memory
 from .environment import transition
 from .policies.multiagent_rollout import multiagent_rollout
-from .policies.random             import random as random_policy
+from .policies.brownian           import brownian
 
 def form_clusters(env_map, senses, s):
     a_info    = env_map.agents_info
@@ -68,12 +68,12 @@ def share_memory(leader, cluster, depths, memory, s):
 def cluster_plan(cluster, local, memory, base_policy, s, t):
     ''' Run MAR within a cluster until all goals are reached or we timeout '''
     env_map = local.memory.map
-    env_map.color_render()
     for r in range(s.cluster_plan_rounds_max):
-        env_map  = map_for_simulate(Memory(env_map, local.memory.time), s) # As transition will mutate this
-        a_info   = env_map.agents_info
+        env_map = map_for_simulate(Memory(env_map, local.memory.time), s, duplicates_only=s.cluster_plan_duplicates_only)
+        a_info  = env_map.agents_info
+        senses  = list(sense_environment(env_map, memory, s, t + r))
         env_map.color_render()
-        senses   = list(sense_environment(env_map, memory, s, t))
+        print(a_info)
         # TODO: Filter non-cluster members. must be propagated to env_map as well. 
         # I feel that simulating them in rollouts is actually more principled, but it should be a toggle
         # f_senses = [sense for sense in senses if sense.code in set(cluster)] # Filter non-cluster members
@@ -83,9 +83,9 @@ def cluster_plan(cluster, local, memory, base_policy, s, t):
         if env_map.count('goal') == 0: # All goals are completed!
             break
         if cluster.shape[0] == 1: # Singleton clusters (no goals)
-            actions = random_policy(env_map, senses, memory, base_policy, t, s)
+            actions = brownian(env_map, senses, memory, base_policy, t, s)
         else:
-            actions = multiagent_rollout(env_map, senses, memory, base_policy, t, s) 
+            actions = multiagent_rollout(env_map, senses, memory, base_policy, t, s, mask_unseen=True) 
 
         code_mask  = np.array([sen.code in a_info.codes for sen in senses])
         ind        = np.arange(a_info.n_agents)[code_mask]
@@ -93,7 +93,6 @@ def cluster_plan(cluster, local, memory, base_policy, s, t):
         empty[ind] = actions
 
         transition(env_map, empty, s)
-        env_map.color_render()
         yield ind, actions
 
 def clustered_multiagent_rollout(env_map, input_senses, memory, base_policy, s, t):
@@ -117,7 +116,7 @@ def clustered_multiagent_rollout(env_map, input_senses, memory, base_policy, s, 
     queue = [empty_acts.copy() for _ in range(max_plan_len)] # All agents wait for all plans to finish (across clusters, by bound)
     for c_plan in cluster_plans:
         for t, (ind, act) in enumerate(c_plan):
-            print(t, ind.shape, act.shape, queue[t].shape)
+            # print(t, ind.shape, act.shape, queue[t].shape)
             queue[t][ind] = act # Emplace plans into correct timestep and agent indices
     if s.queue_cluster_actions:
         pad   = [empty_acts.copy() for _ in range(cluster_rounds + total_share_rounds)]
