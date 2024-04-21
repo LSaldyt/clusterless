@@ -38,12 +38,9 @@ class Belief():
         self.beliefs[:,:,:,1:] = value # type: ignore
 
     def show(self, s):
-        print("Time t=0")
-        print("Level 0 Belief:")
-        print("Level 1 Belief:")
         for x in range(s.belief_max_friends):
-            if self.friends_dist[x,1]: # type: ignore
-                print(f"I believe in {int(self.friends_dist[x,0])} (P={self.friends_dist[x,1]}) at location {self.friends_dist[x,2:]}") # type: ignore
+            if self.friends_dist[x, 1]: # type: ignore
+                print(f"I believe (P={self.friends_dist[x,1]}) I have a friend {s.symbols[int(self.friends_dist[x,0])]} at location {self.friends_dist[x,2:]}") # type: ignore
 
     def to_grid(self):
         return np.argmax(self.level_0, axis=-1) # type: ignore
@@ -214,3 +211,26 @@ def update_belief_for_agent_location(s,b1_slice, int_b1_slice, action_probs_slic
 def b0_to_map(b0):
     m0 = np.argmin(b0, axis=2)
     print(m0)
+
+def generate_phis(s, belief, agent_index, num_samples):
+    b0 = belief.beliefs
+    b0 = b0[...,0]
+    # For a given agent's b0, generate the phis we'll emplace into our worlds
+
+    #yea... this is copy paste and needs to be fixed TODO but belief structure is awk for priors rn
+    prior = np.full((s.size,s.size,4), list(s.probs.values()))
+    prior[:,:,3] = np.where(prior[:,:,3] < s.belief_threshold, 0, prior[:,:,3]) # KILL!
+    prior[:,:,0] += 1-np.sum(prior, axis=2)
+    b0_mask = (b0 == prior).all(axis=2)
+    print(b0[...,2])
+    print(b0_mask)
+
+    for _ in range(num_samples):
+        pre_map = np.zeros((s.size,s.size))
+        random_from_probs = lambda probs: s.gen.choice(np.arange(len(s.probs)), size=1, p=probs)
+        random_map = np.apply_along_axis(random_from_probs, 2,b0)
+        random_map = np.squeeze(random_map)
+        yield b0_mask, random_map
+
+    # exit()
+

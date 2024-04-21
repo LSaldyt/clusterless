@@ -141,25 +141,3 @@ def run():
 
     generate_phis(s, belief, 0, 3)
     
-def generate_phis(s, belief, agent_index, num_samples):
-    b0 = belief.beliefs
-    b0 = b0[...,0]
-    # For a given agent's b0, generate the phis we'll emplace into our worlds
-
-    #yea... this is copy paste and needs to be fixed TODO but belief structure is awk for priors rn
-    prior = np.full((s.size,s.size,4), list(s.probs.values()))
-    prior[:,:,3] = np.where(prior[:,:,3] < s.belief_threshold, 0, prior[:,:,3]) # KILL!
-    prior[:,:,0] += 1-np.sum(prior, axis=2)
-    b0_mask = (b0 == prior).all(axis=2)
-    print(b0[...,2])
-    print(b0_mask)
-
-    for _ in range(num_samples):
-        pre_map = np.zeros((s.size,s.size))
-        random_from_probs = lambda probs: s.gen.choice(np.arange(len(s.probs)), size=1, p=probs)
-        random_map = np.apply_along_axis(random_from_probs, 2,b0)
-        random_map = np.squeeze(random_map)
-        yield b0_mask, random_map
-
-    # exit()
-

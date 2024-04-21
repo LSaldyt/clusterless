@@ -43,6 +43,7 @@ def simulate(env_map, policy, base_policy, timesteps, s,
             for c, belief in beliefs.items(): # type: ignore
                 print(f'Object distributions for agent {s.symbols[c]}')
                 render_belief_dists(belief.level_0, s)
+                belief.show(s)
 
         try:
             actions = policy(PolicyInputs(env_map, sense_input, memory, beliefs, base_policy, t), s)
