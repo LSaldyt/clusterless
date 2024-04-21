@@ -25,10 +25,10 @@ world_str = '''
 ·········
 '''
 
-threshold_value = 0.1
-memory_bound = 7
+threshold_value   = 0.1
+memory_bound      = 7
 
-other_agent_code = 4
+other_agent_code  = 4
 other_agent_index = 0
 
 def run():
@@ -42,7 +42,7 @@ def run():
 
     b1_probabilities = np.zeros((memory_bound,4))
     #np.arange(2*memory_bound).reshape((memory_bound,2))
-    b1_b0s = np.full((s.size,s.size,4,memory_bound+1),np.full((memory_bound+1,4),[1,0,0,0]).transpose(),dtype=float)
+    b1_b0s = np.full((s.size,s.size,4,memory_bound+1), np.full((memory_bound+1,4),[1,0,0,0]).transpose(), dtype=float)
     b1_b0s[:,:,:,0] = init_belief0(s)
     assert (np.sum(b1_b0s, axis=2)==1).all()
 
@@ -83,10 +83,10 @@ def run():
 
     # Zero out anything in previous probabilities that we're certain about rn
     # That way we won't touch it when we update from data.
-    max_t = np.max(senses[0].memory.time)
+    max_t       = np.max(senses[0].memory.time)
     update_grid = np.where(senses[0].memory.time==max_t,senses[0].memory.map.grid,-2)
-    agents = np.unique(update_grid)
-    agents = agents[np.logical_and(agents!=senses[0].code,agents>=3)]
+    agents      = np.unique(update_grid)
+    agents      = agents[np.logical_and(agents!=senses[0].code,agents>=3)]
     previous_b1_probabilities[:,1][~np.isin(b1_probabilities[:,0], agents, invert=True)]=0
 
     # for x in range(memory_bound):
@@ -118,27 +118,33 @@ def run():
     # TODO keep track of the probabilities from last time and then multiply by that in the update, so that we aren't getting probabilities from nowhere
     #      e.g. 50% should split into 25%, 25%, 0%, 0%, 0%; not grow into 100%....
 
-    a_info = map.agents_info
     view_fn      = getattr(utils, s.view_type)
     view_offsets = view_fn(s.view_size)
-    view_coords    = view_offsets + b1_probabilities[other_agent_code,2:].astype(int)
-    view_coords    = view_coords % map.grid.shape[0]
+    view_coords  = view_offsets + b1_probabilities[other_agent_code,2:].astype(int)
+    view_coords  = view_coords % map.grid.shape[0] # type:ignore
     # Get my certainties from my b0. We'll remove these from phi
-    certainties = np.logical_and.reduce(b1_b0s[...,0] != 1,axis=2)
+    certainties  = np.logical_and.reduce(b1_b0s[...,0] != 1,axis=2)
 
     phi_mask = at_xy(view_coords)
 
     phis = []
     for world in generate_worlds(s):
         # will there be any in-place issues?
+        # TODO: Sample phis randomly from our belief state
+        # TODO: Use correct belief state for phi sampling based on our theory of mind level
+        # phi = sample(belief, tom_level)
+        # emplaced = emplace(world, phi)
+        # act, eventual = rollout(policy, emplaced)
+        # transition(emplaced, act)
+        # data.append((act, emplaced))
         phi = np.full((s.size,s.size),-2)
-        phi[phi_mask] = world.grid[phi_mask]
+        phi[phi_mask] = world.grid[phi_mask] #type: ignore
         phi = np.where(certainties, phi, -2)
         phis.append(phi)
 
     test_samples = [(phis[0], np.array([0,1])), (phis[1],np.array([0,1])),(phis[2],np.array([0,0]))]
     for sample in test_samples:
-        add_sample_to_intermediate_belief(s,sample,int_action_probs, int_b1_b0s)
+        add_sample_to_intermediate_belief(s, sample, int_action_probs, int_b1_b0s)
 
     normalize_sampled_belief(int_action_probs, int_b1_b0s, previous_probability)
 
@@ -158,17 +164,17 @@ def run():
     
 
 def dump_thresholded(b0):
-    b0[:,:,3] = np.where(b0[:,:,3]<threshold_value, 0, b0[:,:,3])
+    b0[:,:,3] = np.where(b0[:,:,3]<threshold_value, 0, b0[:,:,3]) # KILL!
     b0[:,:,0] += 1-np.sum(b0, axis=2)
     assert (np.sum(b0, axis=2)==1).all()
 
 def init_belief0(s):
     # Initialize belief from probabilities dictionary
     # NOTE all other agents look the same from the pov of level 0
-    b0 = np.full((s.size,s.size,4),list(s.probs.values()))
+    b0 = np.full((s.size,s.size,4), list(s.probs.values()))
     # Sanity check that it adds to 1 at every cell
     assert (np.sum(b0, axis=2)==1).all()
-    # Depending on threshold, be a solipsist or believe in someday friendship
+    # Depending on threshold, be a solipsist or believe in someday friendship :)
     dump_thresholded(b0)
     return b0
 
@@ -193,7 +199,7 @@ def update_belief_from_ground_truth(s, b1_b0s, b1_probabilities, sense):
     #    codes: 3,4,5,...
     b0_grid = np.where(update_grid>=3,3,update_grid)
 
-    belief_update = broadcast(b0_grid,4) == np.arange(4)
+    belief_update      = broadcast(b0_grid,4) == np.arange(4)
     belief_update_mask = broadcast(np.max(belief_update,axis=2),4)
     b1_b0s[:,:,:,0][belief_update_mask] = belief_update[belief_update_mask]
     assert(np.sum(b1_b0s, axis=2)==1).all()
@@ -214,7 +220,6 @@ def update_belief_from_ground_truth(s, b1_b0s, b1_probabilities, sense):
         argmin_probability = np.argmin(b1_probabilities[:,1])
         # Replace it with a new entry
 
-        # TODO get the x, y of the agent by code in the update grid
         x, y = sense.memory.map.coords[(update_grid == agent).reshape((np.prod((s.size,s.size)),))][0]
         b1_probabilities[argmin_probability,:] = np.array([agent,1,x,y]) 
         # Then replace the corresponding view of b1_b0s with the reasoning agent's b0
