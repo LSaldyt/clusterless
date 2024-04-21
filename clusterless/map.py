@@ -63,7 +63,7 @@ class Map():
         rendered_views = [(' ' * s.view_size + '\n') * s.view_size]
         rendered_grids = [self.color_render(show=False)]
         codes          = []
-        for sense in sense_input:
+        for sense in sorted(sense_input, key=lambda sense : sense.code): 
             # TODO emplace circular views and render them if desired
             # rendered_views.append(render(sense.view,         s.symbols))
             rendered_grids.append(sense.memory.map.color_render(show=False))
@@ -75,7 +75,7 @@ class Map():
 
     def color_render(self, show=True):
         colors          = np.array(list(self.settings.colors))
-        per_cell_colors = colors[self.grid]
+        per_cell_colors = colors[self.grid] # type: ignore
         rendered = render(self.grid, self.settings.symbols, per_cell_colors.ravel())
         if show:
             rich.print(rendered)
