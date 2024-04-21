@@ -70,23 +70,20 @@ def run():
     print(f'Map/Memories after movement')
     map.full_render(senses)
 
+    # Save previous probabilities, bc we will be updating from these with rollout
+    #      (Except in cases where we know exactly what the ground truth is now)
     previous_b1_probabilities = b1_probabilities.copy()
 
+    # Update everything that's certain. No hallucinations here
     update_belief_from_ground_truth(s,b1_b0s, b1_probabilities, senses[0])
 
+    # Zero out anything in previous probabilities that we're certain about rn
+    # That way we won't touch it when we update from data.
     max_t = np.max(senses[0].memory.time)
     update_grid = np.where(senses[0].memory.time==max_t,senses[0].memory.map.grid,-2)
     agents = np.unique(update_grid)
     agents = agents[np.logical_and(agents!=senses[0].code,agents>=3)]
     previous_b1_probabilities[:,1][~np.isin(b1_probabilities[:,0], agents, invert=True)]=0
-
-
-    print(previous_b1_probabilities)
-    print(b1_probabilities)
-    print(np.isin(b1_probabilities[:,1],1))
-    previous_b1_probabilities[:,1][np.isin(b1_probabilities[:,1],1)]=0
-    print(previous_b1_probabilities)
-    exit()
 
     for x in range(memory_bound):
         if b1_probabilities[x,1]:
@@ -250,7 +247,7 @@ def normalize_sampled_belief(intermediate_action_probabilities, intermediate_b1_
         intermediate_b1_b0s[...] = np.where(sum_b0_b1s>0,intermediate_b1_b0s/sum_b0_b1s,0)
 
 def add_sample_to_intermediate_belief(s, sample, intermediate_action_probabilities, intermediate_b1_b0s):
-    action_number = s.action_space_lookup[tuple(sample[1])]
+    action_number = s.action_number_lookup[tuple(sample[1])]
     intermediate_action_probabilities[action_number] +=1
 
     #TODO clean up the sample first 
