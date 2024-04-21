@@ -50,3 +50,6 @@ def horizontal_join(elements, join=' '):
 
 def at_xy(a):
     return a[:, 0], a[:, 1]
+
+from collections import namedtuple
+PolicyInputs = namedtuple('PolicyInputs', ['map', 'sense_info', 'memory', 'beliefs', 'base_policy', 't'])

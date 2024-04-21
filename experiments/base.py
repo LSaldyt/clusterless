@@ -15,9 +15,11 @@ political = (9763,  9775)
 balls_1   = (9312,  9331)
 balls_2   = (9398,  9471)
 greek     = (7596,  7602)
+# dist      = [chr(i) for i in (9617, 9618, 9619, 9607)]
+dist      = [chr(i) for i in (0x25a1, 0x25a7, 0x25a8, 0x25a9, 0x25a4, 0x25a5, 0x25a6, 0x25a0)]
 
 geom = (9600, 9726)
-misc = '✊⛽⛧ ⚰⚜⚕☸☘ ■ ▩ ⏳⏲⏱⏰⎈∾⁕'
+misc = '✊⛽⛧ ⚰⚜⚕☸☘ ■ ▩ ⏳⏲⏱⏰⎈∾⁕⚾⚿⛀⛁⛂⛃⛄⛅⛆⛇⛈⛏'
 curs = 'ℋℐℒℓ℘ℛℨ'
 
 au = list(chr(a) for a in range(arrows[0], arrows[0] + 4))
@@ -36,6 +38,7 @@ def defaults(shared=Settings()):
         colors  = ['', '', 'gold3'] + agent_colors * 100 + ['', 'dark_red'],
 
         time_symbols = ' ⁕',
+        dist_symbols = dist,
 
         # Environment settings
         gen     = np.random.default_rng(2024),

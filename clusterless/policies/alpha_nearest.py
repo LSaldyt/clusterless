@@ -4,7 +4,7 @@ from functools import reduce
 
 from .utils import empty_actions
 
-def alpha_nearest(map, sense_info, memory, base_policy, t, s):
+def alpha_nearest(p, s):
     ''' This policy tries to balance exploration and exploitation with a tunable parameter alpha.
         Ideal: take the shortest path to the cell v which minimizes -log P(G(v)) + alpha*D(v)
             P(G(v)) is the probability that v is a goal. We write I(v) := -log P(G(v))
@@ -14,8 +14,8 @@ def alpha_nearest(map, sense_info, memory, base_policy, t, s):
             alpha*(D(v)-D(w))<I(w)-I(v)
         First Order Simplifications:
             We assume P(G(v)) is either 1 (goal seen at cell v) or the goal generation probability aka s.probs['goal']'''
-    actions = empty_actions(len(sense_info))
-    for i, sense in enumerate(sense_info):
+    actions = empty_actions(len(p.sense_info))
+    for i, sense in enumerate(p.sense_info):
         mem = sense.memory
         goals = mem.map.grid == s.codes['goal']
         goals = goals.astype(float)
@@ -23,7 +23,7 @@ def alpha_nearest(map, sense_info, memory, base_policy, t, s):
         unexplored = s.probs['goal']* unexplored.astype(float)
         possible_targets = (unexplored+goals).reshape((np.prod((s.size,s.size))),)
         # print(f"checking for {c}")
-        move = shortest_path_alpha(s, possible_targets, sense.xy, map.coords, mem)
+        move = shortest_path_alpha(s, possible_targets, sense.xy, p.map.coords, mem)
         actions[i,:]=move
     return actions
 

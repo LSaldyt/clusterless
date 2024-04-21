@@ -5,9 +5,9 @@ from ..utils import UnsolvableException, at_xy, broadcast
 
 from .utils import empty_actions
 
-def wave(map, sense_info, memory, base_policy, t, s):
-    actions = empty_actions(len(sense_info))
-    for i, sense in enumerate(sense_info):
+def wave(p, s):
+    actions = empty_actions(len(p.sense_info))
+    for i, sense in enumerate(p.sense_info):
         actions[i, :] = wave_egocentric(sense.memory, sense.xy, s)
     if (actions == 0).all(): # Absolutely no achievable goals or unexplored regions
         raise UnsolvableException('Wavefront algorithm definitively found no achievable goals for any agent (promise..)')

@@ -4,23 +4,24 @@ import rich
 
 from ..environment import transition, simulate
 from ..memory      import Memory, map_for_simulate, sense_environment
+from ..utils       import PolicyInputs
 
 from .utils import empty_actions
 
-def rollout(map, sense_info, memory, base_policy, t, s):
+def rollout(p, s):
     ''' Rollout for all agents. 
     Technically not MAR. This version assumes NO ORDERING, and each agent 
     pretends that *everyone* else is using the base policy'''
     # First calculate base policy for all agents
-    base_policy_actions = base_policy(map, sense_info, memory, base_policy, t, s)
+    base_policy_actions = s.base_policy(p, s)
     assert not (base_policy_actions == 0).all(), f'Base policy returned all stay actions, reject!!'
-    codes = [sense.code for sense in sense_info]
+    codes = [sense.code for sense in p.sense_info]
 
-    actions = empty_actions(len(sense_info))
-    for i, sense in enumerate(sense_info):
-        actions[i, :] = egocentric_rollout(map, sense.memory, codes, memory,
-                                           base_policy_actions, base_policy, 
-                                           sense.code, t, s, reveal=False)[0]
+    actions = empty_actions(len(p.sense_info))
+    for i, sense in enumerate(p.sense_info):
+        actions[i, :] = egocentric_rollout(map, sense.memory, codes, p.memory,
+                                           base_policy_actions, p.base_policy, 
+                                           sense.code, p.t, s, reveal=False)[0]
     return actions
 
 def cost_to_go(env_map, memory, policy, horizon, s, do_render=False, start_t=0, mask_unseen=False):

@@ -5,9 +5,9 @@ action_space = np.array([[0, 1], [1, 0], [-1, 0], [0, -1]])
 
 from .utils import empty_actions
 
-def nearest(map, sense_info, memory, base_policy, t, s):
-    actions = empty_actions(len(sense_info))
-    for i, sense in enumerate(sense_info):
+def nearest(p, s):
+    actions = empty_actions(len(p.sense_info))
+    for i, sense in enumerate(p.sense_info):
         mem = sense.memory
         targets       = mem.map.mask('goal', 'unseen')
         target_coords = mem.map.coords_of(targets)

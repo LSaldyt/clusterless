@@ -3,10 +3,10 @@ from collections import Counter
 from rich.pretty import pprint
 
 from . import utils
-from .utils import at_xy
+from .utils import at_xy, PolicyInputs
 from .map import Map
 from .memory import init_memory, sense_environment
-from .belief import init_beliefs, update_belief_from_ground_truth, render_beliefs
+from .belief import init_beliefs, render_belief_dists, update_belief_from_ground_truth, render_beliefs
 
 # TODO introduce a simulation settings type to consolidate this garbage :)
 # TODO Simplify this function and maybe remove about 10-20 lines
@@ -40,9 +40,12 @@ def simulate(env_map, policy, base_policy, timesteps, s,
             env_map.full_render(sense_input)
             if track_beliefs:
                 render_beliefs(beliefs, s)
+            for c, belief in beliefs.items(): # type: ignore
+                print(f'Object distributions for agent {s.symbols[c]}')
+                render_belief_dists(belief.level_0, s)
 
         try:
-            actions = policy(env_map, sense_input, memory, base_policy, t, s)
+            actions = policy(PolicyInputs(env_map, sense_input, memory, beliefs, base_policy, t), s)
             info    = transition(env_map, actions, s) # Important: Do transition at the end of the loop
             if progress is not None and task is not None:
                 progress.update(task, advance=1) # type: ignore

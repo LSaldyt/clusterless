@@ -1,8 +1,8 @@
 from clusterless.memory import communicate
 from .wave import wave
 
-def communication_wave(map, sense_info, memory, base_policy, t, s):
+def communication_wave(p, s):
     ''' The wavefront algorithm prefixed by a local communication step '''
-    communicate(memory, sense_info, s)
-    return wave(map, sense_info, memory, base_policy, t, s)
+    communicate(p.memory, p.sense_info, s)
+    return wave(p, s)
 
