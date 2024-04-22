@@ -13,7 +13,7 @@ class Belief():
         #       together with the array of labels w/ probs all at 0
         # Maybe it's 'more principled' to keep a probability over own location/action history too?? (always 1 for us)
 
-        self.friends_dist = np.zeros((s.belief_max_friends,4))
+        self.friends_dist = np.zeros((s.belief_max_friends+1,4))
         self.beliefs      = np.full((s.size,s.size,4,s.belief_max_friends+1), 
                                     np.full((s.belief_max_friends+1,4),[1,0,0,0]).transpose(), 
                                     dtype=float)
@@ -39,8 +39,9 @@ class Belief():
 
     def show(self, s):
         for x in range(s.belief_max_friends):
-            if self.friends_dist[x, 1]: # type: ignore
-                print(f"I believe (P={self.friends_dist[x,1]}) I have a friend {s.symbols[int(self.friends_dist[x,0])]} at location {self.friends_dist[x,2:]}") # type: ignore
+            i = x + 1
+            if self.friends_dist[i, 1]: # type: ignore
+                print(f"I believe (P={self.friends_dist[i,1]}) I have a friend {s.symbols[int(self.friends_dist[i,0])]} at location {self.friends_dist[i,2:]}") # type: ignore
 
     def to_grid(self):
         return np.argmax(self.level_0, axis=-1) # type: ignore
@@ -65,6 +66,8 @@ def init_beliefs(env_map, s):
 
 def render_belief_dists(b0, s):
     from .map import render, Map
+    if (np.argmax(b0, axis=-1) == 0).all():
+        return # Belief is all zeros
     map          = Map(s, np.argmax(b0, axis=-1)) # type: ignore
     rendered     = [map.color_render(show=False)]
     descriptions = [f'{d:<{s.size}}' for d in ('argmax', 'empty', 'obs', 'goal', 'agent')]
@@ -78,13 +81,20 @@ def render_belief_dists(b0, s):
     rich.print(utils.horizontal_join(descriptions))
     print()
 
+def self_friend(sense):
+    return np.array([sense.code, 1.0, *sense.xy])
+
+def spare_friend(friends_dist):
+    argmin_probability = np.argmin(friends_dist[:, 1])
+    return np.min(argmin_probability, 1)
+
 def update_belief_from_ground_truth(s, belief, sense):
     # NOTE that this does not include ALL belief updating.
     #      Some may be done by rollout
     # In particular, agents are not moved around at all
     #      In fact, they're not distinguished from each other at all
     # Also, we just assume agents don't exist after they move out of view
-    max_t = np.max(sense.memory.time)
+    max_t       = np.max(sense.memory.time)
     update_grid = np.where(sense.memory.time==max_t,sense.memory.map.grid,-2)
     # -2 is unseen. Don't update based on this!
     # LAYERS
@@ -106,6 +116,7 @@ def update_belief_from_ground_truth(s, belief, sense):
 
     # Agents we can see, we believe in absolutely
     agents = np.unique(update_grid)  #& update_grid !=sense.code).any()
+    print(f'ground truth agents', agents)
     agents = agents[np.logical_and(agents!=sense.code,agents>=3)]
 
     # Before we update agents with P=1 locations, we zero out any existing entries for them
@@ -116,15 +127,16 @@ def update_belief_from_ground_truth(s, belief, sense):
         #      the reasoner WILL get overwhelmed and start to forget people after others 
         #      introduce themselves 
 
-        # Find the lowest P entry in belief.friends_dist
-        argmin_probability = np.argmin(belief.friends_dist[:,1])
-        # Replace it with a new entry
+        spare = spare_friend(belief.friends_dist)
 
         x, y = sense.memory.map.coords[(update_grid == agent).reshape((np.prod((s.size,s.size)),))][0]
-        belief.friends_dist[argmin_probability,:] = np.array([agent,1,x,y]) 
+        belief.friends_dist[spare,:] = np.array([agent,1,x,y]) 
         # Then replace the corresponding view of belief.beliefs with the reasoning agent's b0
         #      that is, with a copy of our newly updated belief.beliefs[:,:,:,0]
-        belief.beliefs[:,:,:,argmin_probability+1] = belief.level_0
+        belief.beliefs[:,:,:,spare+1] = belief.level_0
+
+    belief.friends_dist[0, :] = self_friend(sense) # Ensure ourselves
+
     # assert (np.sum(belief.beliefs, axis=2)==1).all()
 
 # ---Notes on the full version---
@@ -173,7 +185,6 @@ def add_weighted_sample_to_intermediate_belief_ego(s, grid, intermediate_b1_b0s,
     intermediate_b1_b0s += update * weight
 
 def update_belief_from_simulation(s, belief, int_b1_b0s, int_action_probs, agent_index, agent_code):
-    print(int_action_probs)
     # print(f"updating agent {agent_code} at index {agent_index}")
     old_loc = np.copy(belief.friends_dist[agent_index,2:])
     # print(old_loc)
@@ -192,7 +203,7 @@ def update_belief_from_simulation(s, belief, int_b1_b0s, int_action_probs, agent
     # print(old_loc)
     for action_num in range(4):
         worst = np.min(belief.friends_dist[:,1])
-        worst_index = np.argmin(belief.friends_dist[:,1])
+        worst_index = spare_friend(belief.friends_dist)
         if int_action_probs[action_num] > worst:
             update_belief_for_agent_location(s,belief.beliefs[...,worst_index],int_b1_b0s[...,action_num],belief.friends_dist[worst_index,:],int_action_probs[action_num],agent_code,action_num,old_loc)
 

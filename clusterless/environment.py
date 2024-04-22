@@ -5,7 +5,7 @@ from rich.pretty import pprint
 from . import utils
 from .utils import at_xy, PolicyInputs
 from .map import Map
-from .memory import init_memory, sense_environment
+from .memory import communicate, init_memory, sense_environment
 from .belief import init_beliefs, render_belief_dists, update_belief_from_ground_truth 
 
 # TODO introduce a simulation settings type to consolidate this garbage :)
@@ -32,6 +32,7 @@ def simulate(env_map, policy, base_policy, timesteps, s,
         env_hash    = env_map.hash()
 
         if track_beliefs:
+            communicate(memory, sense_input, s)
             for sense in sense_input:
                 belief = beliefs[sense.code] # type: ignore
                 update_belief_from_ground_truth(s, belief, sense) # Woo! We have belief states!

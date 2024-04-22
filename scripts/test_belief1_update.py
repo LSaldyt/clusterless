@@ -39,7 +39,7 @@ def run():
     memory = init_memory(map, s)
     senses = list(sense_environment(map, memory, s, 0))
     communicate(memory, senses, s)
-    senses = list(sense_environment(map, memory, s, 1))
+    senses = list(sense_environment(map, memory, s, 0))
     print(f'Map/Memories before movement')
     map.full_render(senses)
 
@@ -50,13 +50,14 @@ def run():
     # This section is just running 3 hardcoded actions 
     actions = np.array([[0,1],[1,0],[-1,0]])
     transition(map, actions, s)
-    senses = list(sense_environment(map, memory, s, 2))
+    senses = list(sense_environment(map, memory, s, 1))
     print(f'Map/Memories after movement')
     map.full_render(senses)
 
     # Save previous probabilities, bc we will be updating from these with rollout
     #      (Except in cases where we know exactly what the ground truth is now)
     old_friends = belief.friends_dist.copy() # type: ignore
+    print(old_friends)
 
     # TODO Loop over agent indices
     # for agent_index in range(belief.friends_dist[0])
@@ -76,6 +77,7 @@ def run():
     # agents      = agents[np.logical_and(agents != senses[0].code, agents >= 3)]
     agents = update_grid[(update_grid >= 3) & (update_grid != senses[0].code)]
     old_friends[:, 1][~np.isin(belief.friends_dist[:,0], agents, invert=True)] = 0  # type: ignore
+    print(old_friends)
 
     # Now that we've taken into account solid, absolute reality, we have to do some 
     #     kind of calculation to update our uncertain cells.
@@ -129,6 +131,7 @@ def run():
     test_samples = [(phis[0], np.array([0,1])), (phis[1],np.array([0,1])),(phis[2],np.array([0,0]))]
     for sample in test_samples:
         add_sample_to_intermediate_belief(s, sample, int_action_probs, int_b1_b0s)
+        print('sample action int prob', int_action_probs)
 
     normalize_sampled_belief(int_action_probs, int_b1_b0s, previous_probability)
 

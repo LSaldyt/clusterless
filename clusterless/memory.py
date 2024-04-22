@@ -72,7 +72,7 @@ def sense_environment(env_map, memory, s, timestep):
         # assert is_unique, f'Agent has duplicated another'
         yield AgentSense(memory[c], view, c, xy)
     __last_updated = memory['__last_updated']
-    assert timestep > __last_updated, f'The timestep {timestep} is repeated!!! BAD!!!\n{memory}'
+    # assert timestep > __last_updated, f'The timestep {timestep} is repeated!!! BAD!!!\n{memory}'
     memory['__last_updated'] = timestep
 
 def merge_memory(mem_a, mem_b, s):

@@ -1,4 +1,5 @@
 from copy import deepcopy
+from itertools import chain
 from os.path import normpath
 import numpy as np
 
@@ -31,23 +32,30 @@ def belief_monte_carlo_rollout(p, s):
 
         ego_int_b0 = belief.level_0 * s.n_worlds * s.belief_max_friends * s.russian_trust_factor
 
-        for a_i, friend_dist in sorted(enumerate(belief.friends_dist), key=lambda r : r[1][0]): # I am simulating the people in MY belief state
+        friends_iter = sorted(enumerate(belief.friends_dist), key=lambda r : r[1][0])
+        friends_iter = chain(friends_iter, [(0, self_friend(sense))])
+
+        for a_i, friend_dist in friends_iter: # I am simulating the people in MY belief state
             a_c  = int(friend_dist[0])
             phis = generate_phis(belief, a_i, s) # Local worlds from choosing a particular friend
             if a_c == 0:
                 continue
 
             old_friends                  = belief.friends_dist.copy()
-            previous_probability         = old_friends[a_i][1]
+            if a_i == -1:
+                previous_probability     = 1.0
+            else:
+                previous_probability     = old_friends[a_i, 1]
             int_action_probs, int_b1_b0s = initialize_intermediate_belief(s)
 
             for w, (phi_t, world) in enumerate(zip(phis, s.worlds)):
-                memory   = deepcopy(p.memory)
-                emplaced = emplace_belief(phi_t, world, belief, a_i, a_c, sense, s)
-                imagined = emplaced.clone()
+                local_bel = deepcopy(belief)
+                memory    = deepcopy(p.memory)
+                emplaced  = emplace_belief(phi_t, world, local_bel, a_i, a_c, sense, s)
+                imagined  = emplaced.clone()
 
                 world_sense_info = list(sense_environment(emplaced, memory, s, p.t + 1))
-                p_base = PolicyInputs(emplaced, world_sense_info, memory, p.beliefs, p.base_policy, p.t + 1)
+                p_base = PolicyInputs(emplaced, world_sense_info, memory, local_bel, p.base_policy, p.t + 1)
 
                 base_policy_actions = p.base_policy(p_base, s)
 
@@ -71,8 +79,9 @@ def belief_monte_carlo_rollout(p, s):
                 add_sample_to_intermediate_belief(s, (imagined, act), int_action_probs,     int_b1_b0s)#                                              
                 if s.belief_update_egocentric:
                     add_weighted_sample_to_intermediate_belief_ego(s, imagined.grid, ego_int_b0, weight=friend_dist[1])
-            normalize_sampled_belief(int_action_probs, int_b1_b0s, previous_probability)
-            update_belief_from_simulation(s, belief, int_b1_b0s, int_action_probs, a_i, old_friends[a_i, 0])
+            if a_i > 0: # Do not update ourselves like we do friends
+                normalize_sampled_belief(int_action_probs, int_b1_b0s, previous_probability)
+                update_belief_from_simulation(s, belief, int_b1_b0s, int_action_probs, a_i, old_friends[a_i, 0])
         normalize_sampled_belief_ego(ego_int_b0, 1.0)
 
         print(f'Resulting egocentric belief distribution')
@@ -84,6 +93,9 @@ def belief_monte_carlo_rollout(p, s):
             print(f'Egocentric belief post guarantees')
             render_belief_dists(belief.level_0, s)
 
+        # print(f'Belief choices')
+        # print(world_acts)
+        # print(world_vals)
         best_w         = np.argmax(world_vals)
         actions[i, :]  = world_acts[best_w, :]
     return actions
