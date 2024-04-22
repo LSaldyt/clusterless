@@ -1,3 +1,4 @@
+from clusterless.monte_carlo import generate_worlds
 from science import Experiment
 from clusterless.environment import Map, simulate 
 from clusterless.policies    import available_policies
@@ -19,8 +20,11 @@ class BaseExperiment(Experiment):
         else:
             policies = [s.policy]
 
-        maps = [(i_r, Map(s))
-                 for i_r in range(s.environment_samples)]
+        # Randomly generate both environment samples and world samples (thetas)
+        maps   = [(i_r, Map(s))
+                   for i_r in range(s.environment_samples)]
+        worlds = list(generate_worlds(s))
+        s.update(worlds=worlds)
 
         with Progress() as progress:
             map_task = progress.add_task(f'Maps ({s.environment_samples})', total=s.environment_samples)

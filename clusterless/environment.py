@@ -6,7 +6,7 @@ from . import utils
 from .utils import at_xy, PolicyInputs
 from .map import Map
 from .memory import init_memory, sense_environment
-from .belief import init_beliefs, render_belief_dists, update_belief_from_ground_truth, render_beliefs
+from .belief import init_beliefs, render_belief_dists, update_belief_from_ground_truth 
 
 # TODO introduce a simulation settings type to consolidate this garbage :)
 # TODO Simplify this function and maybe remove about 10-20 lines
@@ -39,11 +39,16 @@ def simulate(env_map, policy, base_policy, timesteps, s,
             print(f'Hash: {env_hash}')
             env_map.full_render(sense_input)
             if track_beliefs:
-                render_beliefs(beliefs, s)
-            for c, belief in beliefs.items(): # type: ignore
-                print(f'Object distributions for agent {s.symbols[c]}')
-                render_belief_dists(belief.level_0, s)
-                belief.show(s)
+                for c, belief in beliefs.items(): # type: ignore
+                    print(f'Object distributions for agent {s.symbols[c]}')
+                    render_belief_dists(belief.level_0, s)
+                    belief.show(s)
+                    for j in range(belief.friends_dist.shape[0]): # type: ignore
+                        fc = int(belief.friends_dist[j, 0]) # type: ignore
+                        if fc == 0:
+                            continue
+                        print(f'L1 Belief for friend {s.symbols[fc]} ({j})') # type: ignore
+                        render_belief_dists(belief.level_1[:, :, :, j], s) # type: ignore
 
         try:
             actions = policy(PolicyInputs(env_map, sense_input, memory, beliefs, base_policy, t), s)
