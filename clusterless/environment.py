@@ -39,17 +39,17 @@ def simulate(env_map, policy, base_policy, timesteps, s,
         if do_render:
             print(f'Hash: {env_hash}')
             env_map.full_render(sense_input)
-            # if track_beliefs:
-            #     for c, belief in beliefs.items(): # type: ignore
-            #         print(f'Object distributions for agent {s.symbols[c]}')
-            #         render_belief_dists(belief.level_0, s)
-            #         belief.show(s)
-            #         for j in range(belief.friends_dist.shape[0]): # type: ignore
-            #             fc = int(belief.friends_dist[j, 0]) # type: ignore
-            #             if fc == 0:
-            #                 continue
-            #             print(f'L1 Belief for friend {s.symbols[fc]} ({j})') # type: ignore
-            #             render_belief_dists(belief.level_1[:, :, :, j], s) # type: ignore
+            if track_beliefs:
+                for c, belief in beliefs.items(): # type: ignore
+                    print(f'Object distributions for agent {s.symbols[c]}')
+                    render_belief_dists(belief.level_0, s)
+                    belief.show(s)
+                    for j in range(belief.friends_dist.shape[0]):             # type: ignore
+                        fc = int(belief.friends_dist[j, 0])                   # type: ignore
+                        if belief.friends_dist[j, 1] < s.belief_threshold:    # type: ignore
+                            continue
+                        print(f'L1 Belief for friend {s.symbols[fc]} ({belief.friends_dist[j, :]}) ') # type: ignore
+                        render_belief_dists(belief.level_1[:, :, :, j], s)    # type: ignore
 
         try:
             actions = policy(PolicyInputs(env_map, sense_input, memory, beliefs, base_policy, t), s)

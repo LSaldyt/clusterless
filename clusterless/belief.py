@@ -165,7 +165,7 @@ def add_sample_to_intermediate_belief(s, sample, intermediate_action_probabiliti
 
     #TODO clean up the sample first 
     # TODO split off the cleaning up function so it can be shared with ground truth update
-    update = utils.broadcast(sample[0],4) == np.arange(4)
+    update = utils.broadcast(sample[0], 4) == np.arange(4)
     intermediate_b1_b0s[...,action_number] += update
 
 def add_weighted_sample_to_intermediate_belief_ego(s, grid, intermediate_b1_b0s, weight=1.0):
@@ -173,6 +173,7 @@ def add_weighted_sample_to_intermediate_belief_ego(s, grid, intermediate_b1_b0s,
     intermediate_b1_b0s += update * weight
 
 def update_belief_from_simulation(s, belief, int_b1_b0s, int_action_probs, agent_index, agent_code):
+    print(int_action_probs)
     # print(f"updating agent {agent_code} at index {agent_index}")
     old_loc = np.copy(belief.friends_dist[agent_index,2:])
     # print(old_loc)
@@ -209,6 +210,26 @@ def b0_to_map(b0):
     m0 = np.argmin(b0, axis=2)
     print(m0)
 
+def guaranteed_mask(b0):
+    return np.max(np.where(b0[...,:2] == 1, b0[..., :2], 0),axis=2)
+
+def generate_friends(belief, a_i, a_c, s):
+    friends_dist = belief.friends_dist
+    for fc in np.unique(friends_dist[:, 0]): # Iterate over our friends, e.g. fred, sally, anne
+        if fc == a_c:
+            yield belief.friends_dist[a_i, -2:], a_c # Coordinates of the current agent
+            break
+        friend = None
+        f_dist = friends_dist[friends_dist[:, 0] == fc] # Distribution of only freds
+        opts   = f_dist[:, -2:] # Coordinates of multiple friends
+        probs  = f_dist[:, 1]   # Probabilities of multiple friends
+        if np.sum(probs) != 1.0:
+            probs = np.array(list(probs) + [1 - np.sum(probs)])
+            opts  = np.array(list(opts)  + [np.array([np.nan, np.nan])])
+        friend = s.gen.choice(opts, p=probs) # Choice of left fred or right fred. Fred is required.
+        if not np.isnan(friend).any(): # :( Sad when our friends are None
+            yield friend, a_c  # Great joy when our friends are not None. YIELD
+
 def generate_phis(belief, a_i, s):
     b0 = belief.beliefs
     b0 = b0[...,a_i]
@@ -219,7 +240,8 @@ def generate_phis(belief, a_i, s):
     prior[:,:,3] = np.where(prior[:,:,3] < s.belief_threshold, 0, prior[:,:,3]) # KILL!
     prior[:,:,0] += 1-np.sum(prior, axis=2)
     b0_mask = (b0 == prior).all(axis=2)
-    guaranteed_objects = np.max(np.where(b0[...,:2]==1, b0[...,:2],0),axis=2)
+
+    guaranteed_objects = guaranteed_mask(b0) 
 
     for _ in range(s.n_worlds):
         pre_map = np.zeros((s.size,s.size))

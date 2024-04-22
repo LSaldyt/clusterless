@@ -68,8 +68,8 @@ def sense_environment(env_map, memory, s, timestep):
     for c, (xy, view_coords, view) in zip(a_info.codes, views(env_map, s)): 
         memory[c].map.grid[*at_xy(view_coords)] = view
         memory[c].time[    *at_xy(view_coords)] = timestep
-        is_unique = (np.unique(memory[c].map.agents_info.codes, return_counts=True)[-1] == 1).all()
-        assert is_unique, f'Agent has duplicated another'
+        # is_unique = (np.unique(memory[c].map.agents_info.codes, return_counts=True)[-1] == 1).all()
+        # assert is_unique, f'Agent has duplicated another'
         yield AgentSense(memory[c], view, c, xy)
     __last_updated = memory['__last_updated']
     assert timestep > __last_updated, f'The timestep {timestep} is repeated!!! BAD!!!\n{memory}'

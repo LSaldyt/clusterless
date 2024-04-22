@@ -39,7 +39,7 @@ def run():
     memory = init_memory(map, s)
     senses = list(sense_environment(map, memory, s, 0))
     communicate(memory, senses, s)
-    senses = list(sense_environment(map, memory, s, 0))
+    senses = list(sense_environment(map, memory, s, 1))
     print(f'Map/Memories before movement')
     map.full_render(senses)
 
@@ -50,7 +50,7 @@ def run():
     # This section is just running 3 hardcoded actions 
     actions = np.array([[0,1],[1,0],[-1,0]])
     transition(map, actions, s)
-    senses = list(sense_environment(map, memory, s, 1))
+    senses = list(sense_environment(map, memory, s, 2))
     print(f'Map/Memories after movement')
     map.full_render(senses)
 
