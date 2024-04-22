@@ -1,7 +1,7 @@
 from copy import deepcopy
 import numpy as np
 
-from ..monte_carlo import generate_worlds, emplace
+from ..monte_carlo import emplace
 from ..memory      import init_memory, map_for_simulate, sense_environment, Memory
 from ..utils       import PolicyInputs
 from .utils        import empty_actions
@@ -15,7 +15,7 @@ def monte_carlo_rollout(p, s):
         world_vals = np.zeros(s.n_worlds)
         eventual_worlds = []
 
-        for w, world in enumerate(generate_worlds(s)):
+        for w, world in enumerate(s.worlds):
             memory  = deepcopy(p.memory)
             beliefs = deepcopy(p.beliefs) # Uhhhh
             # print(f'Monte Carlo world {w}')

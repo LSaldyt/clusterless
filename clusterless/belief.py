@@ -63,23 +63,11 @@ class Belief():
 def init_beliefs(env_map, s):
     return {k : Belief(s) for k in env_map.agents_info.codes}
 
-def render_beliefs(beliefs, s):
-    print(f'Belief states (argmax):')
-    from .map import Map
-    rendered     = [(' ' * s.size + '\n') * s.size]
-    descriptions = [' ' * s.size]
-    for c, belief in beliefs.items():
-        map = Map(s, belief.to_grid())
-        rendered.append(map.color_render(show=False))
-        descriptions.append(f'agent {s.symbols[c]}')
-    rich.print(utils.horizontal_join(rendered))
-    rich.print(utils.horizontal_join(descriptions))
-    print()
-
 def render_belief_dists(b0, s):
-    from .map import render
-    rendered     = [(' ' * s.size + '\n') * s.size]
-    descriptions = [f'{d:<{s.size}}' for d in ('', 'empty', 'obs', 'goal', 'agent')]
+    from .map import render, Map
+    map          = Map(s, np.argmax(b0, axis=-1)) # type: ignore
+    rendered     = [map.color_render(show=False)]
+    descriptions = [f'{d:<{s.size}}' for d in ('argmax', 'empty', 'obs', 'goal', 'agent')]
     for c in range(4):
         p       = b0[:, :, c]
         choices = np.arange(8)
@@ -153,9 +141,9 @@ def update_belief_from_ground_truth(s, belief, sense):
     # After sampling is done, normalize the action probability vector, associate each action with a (also normalized)
     #   3D tensor, and add them to A's b1 belief state.
 
-def initialize_intermediate_belief(s):
-    intermediate_action_probabilities = np.zeros(5)
-    intermediate_b1_b0s = np.zeros((s.size, s.size, 4, 5))
+def initialize_intermediate_belief(s, d=5):
+    intermediate_action_probabilities = np.zeros(d)
+    intermediate_b1_b0s = np.zeros((s.size, s.size, 4, d))
     return intermediate_action_probabilities, intermediate_b1_b0s
 
 def normalize_sampled_belief(intermediate_action_probabilities, intermediate_b1_b0s, previous_probability):
@@ -163,19 +151,26 @@ def normalize_sampled_belief(intermediate_action_probabilities, intermediate_b1_
     #       up, down, left, right, stay
     intermediate_action_probabilities /= np.sum(intermediate_action_probabilities)
     intermediate_action_probabilities *= previous_probability
+    normalize_sampled_belief_ego(intermediate_b1_b0s, previous_probability)
+
+def normalize_sampled_belief_ego(intermediate_b1_b0s, previous_probability):
     # Note that this is normalized relative to the action taken! So we only divide by a subset of worlds
     sum_b0_b1s = utils.broadcast(np.sum(intermediate_b1_b0s,2),4,axis=2)
     with np.errstate(divide='ignore',invalid='ignore'):
         intermediate_b1_b0s[...] = np.where(sum_b0_b1s>0,intermediate_b1_b0s/sum_b0_b1s,0)*previous_probability
 
-def add_sample_to_intermediate_belief(s, sample, intermediate_action_probabilities, intermediate_b1_b0s):
-    action_number = s.action_number_lookup[str(tuple(sample[1]))]
-    intermediate_action_probabilities[action_number] +=1
+def add_sample_to_intermediate_belief(s, sample, intermediate_action_probabilities, intermediate_b1_b0s, weight=1.0):
+    action_number = s.action_number_lookup[str(tuple(np.squeeze(sample[1])))] 
+    intermediate_action_probabilities[action_number] += weight
 
     #TODO clean up the sample first 
     # TODO split off the cleaning up function so it can be shared with ground truth update
     update = utils.broadcast(sample[0],4) == np.arange(4)
     intermediate_b1_b0s[...,action_number] += update
+
+def add_weighted_sample_to_intermediate_belief_ego(s, grid, intermediate_b1_b0s, weight=1.0):
+    update = utils.broadcast(grid, 4) == np.arange(4)
+    intermediate_b1_b0s += update * weight
 
 def update_belief_from_simulation(s, belief, int_b1_b0s, int_action_probs, agent_index, agent_code):
     # print(f"updating agent {agent_code} at index {agent_index}")
@@ -184,7 +179,8 @@ def update_belief_from_simulation(s, belief, int_b1_b0s, int_action_probs, agent
     # print(agent_code)
     # print(s.symbols[agent_code])
     # print(belief.friends_dist)
-    update_belief_for_agent_location(s,belief.beliefs[:,:,:,agent_index], int_b1_b0s[...,4],belief.friends_dist[agent_index,:],int_action_probs[4],agent_code,4,old_loc)
+    update_belief_for_agent_location(s, belief.beliefs[:,:,:,agent_index], int_b1_b0s[...,4],
+                                     belief.friends_dist[agent_index,:], int_action_probs[4], agent_code, 4, old_loc)
     # print(belief.friends_dist)
 
     # Only overwrite the lowest probability slices, and only do so if the new data is higher probability
@@ -199,7 +195,8 @@ def update_belief_from_simulation(s, belief, int_b1_b0s, int_action_probs, agent
         if int_action_probs[action_num] > worst:
             update_belief_for_agent_location(s,belief.beliefs[...,worst_index],int_b1_b0s[...,action_num],belief.friends_dist[worst_index,:],int_action_probs[action_num],agent_code,action_num,old_loc)
 
-def update_belief_for_agent_location(s,b1_slice, int_b1_slice, action_probs_slice, int_action_probs_slice,agent_code,action_num,old_location):
+def update_belief_for_agent_location(s, b1_slice, int_b1_slice, action_probs_slice, 
+                                     int_action_probs_slice, agent_code, action_num, old_location):
     action_probs_slice[0] = agent_code
     action_probs_slice[1] = int_action_probs_slice
     x, y = s.action_space[action_num]
@@ -212,9 +209,9 @@ def b0_to_map(b0):
     m0 = np.argmin(b0, axis=2)
     print(m0)
 
-def generate_phis(s, belief, agent_index, num_samples):
+def generate_phis(belief, a_i, s):
     b0 = belief.beliefs
-    b0 = b0[...,0]
+    b0 = b0[...,a_i]
     # For a given agent's b0, generate the phis we'll emplace into our worlds
 
     #yea... this is copy paste and needs to be fixed TODO but belief structure is awk for priors rn
@@ -222,10 +219,10 @@ def generate_phis(s, belief, agent_index, num_samples):
     prior[:,:,3] = np.where(prior[:,:,3] < s.belief_threshold, 0, prior[:,:,3]) # KILL!
     prior[:,:,0] += 1-np.sum(prior, axis=2)
     b0_mask = (b0 == prior).all(axis=2)
-    print(b0[...,2])
-    print(b0_mask)
+    # print(b0[...,2])
+    # print(b0_mask)
 
-    for _ in range(num_samples):
+    for _ in range(s.n_worlds):
         pre_map = np.zeros((s.size,s.size))
         random_from_probs = lambda probs: s.gen.choice(np.arange(len(s.probs)), size=1, p=probs)
         random_map = np.apply_along_axis(random_from_probs, 2,b0)

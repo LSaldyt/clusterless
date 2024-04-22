@@ -139,5 +139,5 @@ def run():
 
     belief.show(s)
 
-    generate_phis(s, belief, 0, 3)
+    generate_phis(belief, s)
     
