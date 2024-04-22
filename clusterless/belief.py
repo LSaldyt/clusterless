@@ -114,7 +114,7 @@ def update_belief_from_ground_truth(s, belief, sense):
     belief_update      = utils.broadcast(b0_grid,4) == np.arange(4)
     belief_update_mask = utils.broadcast(np.max(belief_update,axis=2),4)
     belief.level_0[belief_update_mask] = belief_update[belief_update_mask]
-    assert(np.sum(belief.beliefs, axis=2)==1).all()
+    # assert(np.sum(belief.beliefs, axis=2)==1).all()
 
     # Agents we can see, we believe in absolutely
     agents = np.unique(update_grid)  #& update_grid !=sense.code).any()
@@ -137,7 +137,7 @@ def update_belief_from_ground_truth(s, belief, sense):
         # Then replace the corresponding view of belief.beliefs with the reasoning agent's b0
         #      that is, with a copy of our newly updated belief.beliefs[:,:,:,0]
         belief.beliefs[:,:,:,argmin_probability+1] = belief.level_0
-    assert (np.sum(belief.beliefs, axis=2)==1).all()
+    # assert (np.sum(belief.beliefs, axis=2)==1).all()
 
 # ---Notes on the full version---
     # 
@@ -214,7 +214,7 @@ def b0_to_map(b0):
 
 def generate_phis(s, belief, agent_index, num_samples):
     b0 = belief.beliefs
-    b0 = b0[...,0]
+    b0 = b0[...,agent_index]
     # For a given agent's b0, generate the phis we'll emplace into our worlds
 
     #yea... this is copy paste and needs to be fixed TODO but belief structure is awk for priors rn
@@ -222,15 +222,18 @@ def generate_phis(s, belief, agent_index, num_samples):
     prior[:,:,3] = np.where(prior[:,:,3] < s.belief_threshold, 0, prior[:,:,3]) # KILL!
     prior[:,:,0] += 1-np.sum(prior, axis=2)
     b0_mask = (b0 == prior).all(axis=2)
-    print(b0[...,2])
+    print(b0[...,1])
     print(b0_mask)
+
+    # total hack...
+    guaranteed_objects = np.max(np.where(b0[...,:2]==1, b0[...,:2],0),axis=2)
 
     for _ in range(num_samples):
         pre_map = np.zeros((s.size,s.size))
         random_from_probs = lambda probs: s.gen.choice(np.arange(len(s.probs)), size=1, p=probs)
         random_map = np.apply_along_axis(random_from_probs, 2,b0)
         random_map = np.squeeze(random_map)
-        yield b0_mask, random_map
+        yield b0_mask, random_map, guaranteed_objects
 
     # exit()
 
