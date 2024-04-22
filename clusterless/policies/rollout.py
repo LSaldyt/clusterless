@@ -13,7 +13,7 @@ def rollout(p, s):
     Technically not MAR. This version assumes NO ORDERING, and each agent 
     pretends that *everyone* else is using the base policy'''
     # First calculate base policy for all agents
-    base_policy_actions = s.base_policy(p, s)
+    base_policy_actions = p.base_policy(p, s)
     assert not (base_policy_actions == 0).all(), f'Base policy returned all stay actions, reject!!'
     codes = [sense.code for sense in p.sense_info]
 
@@ -21,14 +21,14 @@ def rollout(p, s):
     for i, sense in enumerate(p.sense_info):
         actions[i, :] = egocentric_rollout(map, sense.memory, codes, p.memory,
                                            base_policy_actions, p.base_policy, 
-                                           sense.code, p.t, s, reveal=False)[0]
+                                           sense.code, p.t + 1, s, reveal=False)[0]
     return actions
 
 def cost_to_go(env_map, memory, policy, horizon, s, do_render=False, start_t=0, mask_unseen=False):
     memory  = deepcopy(memory)
     memory  = {c : Memory(map_for_simulate(mem, s, duplicates_only=s.rollout_duplicates_only, mask_unseen=mask_unseen),
-                      mem.time)
-               for c, mem in memory.items()}
+                      mem.time) if c != '__last_updated' else mem
+               for c, mem in memory.items() }
     results = simulate(env_map, policy, policy, horizon, s, 
                        check_goals=True, check_cycles=False, 
                        do_render=do_render, memory=memory, 
@@ -36,9 +36,10 @@ def cost_to_go(env_map, memory, policy, horizon, s, do_render=False, start_t=0, 
                        track_beliefs=False) # Do NOT track beliefs within rollout!
     return results
 
-def egocentric_rollout(ground_truth_map, mem, codes, memory, given_actions, base_policy, agent_code, t, s, mask_unseen=False, reveal=False):    
+def egocentric_rollout(ground_truth_map, mem, codes, in_memory, given_actions, base_policy, agent_code, t, s, mask_unseen=False, reveal=False):    
     ''' Egocentric 1-step lookahead with truncated rollout
         Requires s to define a base policy '''
+    memory  = deepcopy(in_memory)
     values  = np.zeros(s.action_space.shape[0], dtype=np.float32)
     if reveal:
         mem_map = ground_truth_map.clone()
@@ -66,8 +67,9 @@ def egocentric_rollout(ground_truth_map, mem, codes, memory, given_actions, base
         acts      = future_actions[np.arange(a_info.n_agents)[code_mask]]
         info      = transition(next_map, acts, s) # Modifies next_map
         horizon   = np.minimum(s.timesteps - t, s.truncated_timesteps)
-        senses    = list(sense_environment(next_map, memory, s, t + 1))
-        remain    = cost_to_go(next_map, memory, base_policy, horizon, s, do_render=False, start_t=t+1, mask_unseen=mask_unseen)
+        next_mem  = deepcopy(memory)
+        senses    = list(sense_environment(next_map, next_mem, s, t + 1))
+        remain    = cost_to_go(next_map, next_mem, base_policy, horizon, s, do_render=False, start_t=t+2, mask_unseen=mask_unseen)
 
         # print(s.action_words[j])
         # print(f'Rollout end map!')

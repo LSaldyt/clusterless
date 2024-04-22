@@ -25,6 +25,7 @@ def simulate(env_map, policy, base_policy, timesteps, s,
     log_fn     = log_fn if log_fn is not None else lambda *x, **k : None
     extra      = extra  if extra  is not None else dict()
 
+
     step_count = timesteps
     for t in range(start_t, start_t + timesteps):
         sense_input = list(sense_environment(env_map, memory, s, t))
@@ -38,17 +39,17 @@ def simulate(env_map, policy, base_policy, timesteps, s,
         if do_render:
             print(f'Hash: {env_hash}')
             env_map.full_render(sense_input)
-            if track_beliefs:
-                for c, belief in beliefs.items(): # type: ignore
-                    print(f'Object distributions for agent {s.symbols[c]}')
-                    render_belief_dists(belief.level_0, s)
-                    belief.show(s)
-                    for j in range(belief.friends_dist.shape[0]): # type: ignore
-                        fc = int(belief.friends_dist[j, 0]) # type: ignore
-                        if fc == 0:
-                            continue
-                        print(f'L1 Belief for friend {s.symbols[fc]} ({j})') # type: ignore
-                        render_belief_dists(belief.level_1[:, :, :, j], s) # type: ignore
+            # if track_beliefs:
+            #     for c, belief in beliefs.items(): # type: ignore
+            #         print(f'Object distributions for agent {s.symbols[c]}')
+            #         render_belief_dists(belief.level_0, s)
+            #         belief.show(s)
+            #         for j in range(belief.friends_dist.shape[0]): # type: ignore
+            #             fc = int(belief.friends_dist[j, 0]) # type: ignore
+            #             if fc == 0:
+            #                 continue
+            #             print(f'L1 Belief for friend {s.symbols[fc]} ({j})') # type: ignore
+            #             render_belief_dists(belief.level_1[:, :, :, j], s) # type: ignore
 
         try:
             actions = policy(PolicyInputs(env_map, sense_input, memory, beliefs, base_policy, t), s)

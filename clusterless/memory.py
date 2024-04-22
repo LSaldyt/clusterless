@@ -33,16 +33,14 @@ def views(env_map, s):
         yield a_info.coords[i, :], view_coords, view
 
 def init_memory(env_map, s):
-    return {k : Memory(Map(s, np.full(env_map.grid.shape, s.codes['unseen'])), 
+    return {**{k : Memory(Map(s, np.full(env_map.grid.shape, s.codes['unseen'])), 
                        np.full(env_map.grid.shape, 0)) 
-            for k in env_map.agents_info.codes}
+            for k in env_map.agents_info.codes},
+            **{'__last_updated' : -1}}
 
 def map_for_simulate(mem, s, duplicates_only=False, mask_unseen=True):
     ''' Remove old agents when maps are being used for simulation. Not compatible with beliefs '''
     clone  = mem.map.clone()
-    # print('before')
-    # clone.color_render()
-    # print(mem.time)
     latest = np.max(mem.time)
     agents = clone.grid >= s.codes['agent']
     if duplicates_only:
@@ -55,8 +53,6 @@ def map_for_simulate(mem, s, duplicates_only=False, mask_unseen=True):
     if mask_unseen:
         clone.set_at(clone.at('unseen'), s.codes['obstacle'])
     clone._inc_purity()
-    # print('after')
-    # clone.color_render()
     is_unique = (np.unique(clone.agents_info.codes, return_counts=True)[-1] == 1).all()
     if not is_unique:
         print('before')
@@ -72,7 +68,12 @@ def sense_environment(env_map, memory, s, timestep):
     for c, (xy, view_coords, view) in zip(a_info.codes, views(env_map, s)): 
         memory[c].map.grid[*at_xy(view_coords)] = view
         memory[c].time[    *at_xy(view_coords)] = timestep
+        is_unique = (np.unique(memory[c].map.agents_info.codes, return_counts=True)[-1] == 1).all()
+        assert is_unique, f'Agent has duplicated another'
         yield AgentSense(memory[c], view, c, xy)
+    __last_updated = memory['__last_updated']
+    assert timestep > __last_updated, f'The timestep {timestep} is repeated!!! BAD!!!\n{memory}'
+    memory['__last_updated'] = timestep
 
 def merge_memory(mem_a, mem_b, s):
     recent   = mem_a.time > mem_b.time
