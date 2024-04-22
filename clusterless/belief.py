@@ -86,7 +86,7 @@ def self_friend(sense):
 
 def spare_friend(friends_dist):
     argmin_probability = np.argmin(friends_dist[:, 1])
-    return np.min(argmin_probability, 1)
+    return np.minimum(argmin_probability, 1)
 
 def update_belief_from_ground_truth(s, belief, sense):
     # NOTE that this does not include ALL belief updating.
@@ -116,7 +116,6 @@ def update_belief_from_ground_truth(s, belief, sense):
 
     # Agents we can see, we believe in absolutely
     agents = np.unique(update_grid)  #& update_grid !=sense.code).any()
-    print(f'ground truth agents', agents)
     agents = agents[np.logical_and(agents!=sense.code,agents>=3)]
 
     # Before we update agents with P=1 locations, we zero out any existing entries for them

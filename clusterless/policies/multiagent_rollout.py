@@ -9,5 +9,5 @@ def multiagent_rollout(p, s, do_render=False, mask_unseen=True):
     for i, sense in enumerate(p.sense_info):
         given_actions[i, :] = egocentric_rollout(map, sense.memory, codes, p.memory,
                                                  given_actions, p.base_policy, sense.code, p.t, s, mask_unseen=mask_unseen,
-                                                 reveal=False)
+                                                 reveal=False)[0]
     return given_actions

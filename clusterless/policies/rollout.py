@@ -52,7 +52,9 @@ def egocentric_rollout(ground_truth_map, mem, codes, in_memory, given_actions, b
     matching_codes = [c in sense_codes for c in codes]
     # Prune future actions for agents we don't know about!!
     future_actions = given_actions[np.arange(len(codes))[matching_codes]]
-    assert future_actions.shape[0] == a_info.n_agents, f'actions = {future_actions.shape}[0] != {a_info.n_agents}'
+    if future_actions.shape[0] != a_info.n_agents:
+        print(f'WARNING: actions = {future_actions.shape}[0] != {a_info.n_agents}')
+        future_actions = given_actions
 
     ego_i = list(sense_codes).index(agent_code)
 

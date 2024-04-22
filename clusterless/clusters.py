@@ -2,9 +2,10 @@
 ''' Ironic. Intended for implementing a baseline.
 A transcription / pseudocode of my understanding of Jamison's algorithm '''
 
+from copy import deepcopy
 import numpy as np
 
-from .utils  import broadcast 
+from .utils  import PolicyInputs, broadcast 
 from .memory import merge_memory, sense_environment, map_for_simulate, Memory
 from .environment import transition
 from .policies.multiagent_rollout import multiagent_rollout
@@ -22,11 +23,15 @@ def form_clusters(env_map, senses, s):
     clusters  = np.where(leader, ids, -1)                     # Set initial cluster IDs to leader agent IDs
     depths    = np.where(leader,   0, -1)                     # Depths of each cluster
     adj       = np.zeros((a + 1, a + 1), dtype=np.int32)      # Empty adjacency matrix (a, a)
+    index     = np.array([list(a_info.codes).index(c) for c in a_info.codes])
     views_l   = np.where(views >= s.codes['agent'],           # View adjacency list (a, v)
-                         views  - s.codes['agent'], -1)       # Adjusted to be indices rather than integer codes
-    views_l   = views_l[a_info.codes - 3]                     # Views
+                         broadcast(index, views.shape[1]), -1)       # Adjusted to be indices rather than integer codes
+    views_l   = views_l[index]                                # Views
     b_ids     = broadcast(ids, views_l.shape[1])              # IDs in the same shape as view adjacency list
 
+    print(adj.shape)
+    print(b_ids)
+    print(views_l)
     adj[b_ids, views_l] = np.where(views_l >= 0, 1, 0) # Create the adjacency matrix in a single vectorized operation!!
     adj = adj[:a, :a] # Cut away auxillary dimensions that we added to do vectorized operations
 
@@ -71,9 +76,8 @@ def cluster_plan(cluster, local, memory, base_policy, s, t):
     for r in range(s.cluster_plan_rounds_max):
         env_map = map_for_simulate(Memory(env_map, local.memory.time), s, duplicates_only=s.cluster_plan_duplicates_only)
         a_info  = env_map.agents_info
-        senses  = list(sense_environment(env_map, memory, s, t + r))
+        senses  = list(sense_environment(env_map, deepcopy(memory), s, t + r + 1))
         env_map.color_render()
-        print(a_info)
         # TODO: Filter non-cluster members. must be propagated to env_map as well. 
         # I feel that simulating them in rollouts is actually more principled, but it should be a toggle
         # f_senses = [sense for sense in senses if sense.code in set(cluster)] # Filter non-cluster members
@@ -82,10 +86,11 @@ def cluster_plan(cluster, local, memory, base_policy, s, t):
             break
         if env_map.count('goal') == 0: # All goals are completed!
             break
+        p_info = PolicyInputs(env_map, senses, deepcopy(memory), None, base_policy, t + r + 2)
         if cluster.shape[0] == 1: # Singleton clusters (no goals)
-            actions = brownian(env_map, senses, memory, base_policy, t, s)
+            actions = brownian(p_info, s)
         else:
-            actions = multiagent_rollout(env_map, senses, memory, base_policy, t, s, mask_unseen=True) 
+            actions = multiagent_rollout(p_info, s, mask_unseen=True)
 
         code_mask  = np.array([sen.code in a_info.codes for sen in senses])
         ind        = np.arange(a_info.n_agents)[code_mask]
@@ -95,21 +100,21 @@ def cluster_plan(cluster, local, memory, base_policy, s, t):
         transition(env_map, empty, s)
         yield ind, actions
 
-def clustered_multiagent_rollout(env_map, input_senses, memory, base_policy, s, t):
-    empty_acts = np.zeros((env_map.agents_info.n_agents, 2), dtype=np.int32)
-    if not input_senses:
+def clustered_multiagent_rollout(p, s):
+    empty_acts = np.zeros((p.map.agents_info.n_agents, 2), dtype=np.int32)
+    if not p.sense_info:
         return [empty_acts] # If there are no agents.. do nothing.
     cluster_plans = []
     total_share_rounds = 0
-    clusters, cluster_rounds = form_clusters(env_map, input_senses, s)
-    input_senses = {s.code : s for s in input_senses}
+    clusters, cluster_rounds = form_clusters(p.map, p.sense_info, s)
+    input_senses = {s.code : s for s in p.sense_info}
     for leader, cluster, depths in clusters:
-        total_share_rounds += share_memory(leader, cluster, depths, memory, s) 
+        total_share_rounds += share_memory(leader, cluster, depths, p.memory, s) 
         print(f'Cluster: ({" ".join(s.symbols[c] for c in cluster)}), leader {s.symbols[leader[0]]}')
         # Leader computes MAR for whole cluster
         local = input_senses[leader[0]] # Leader's sensory information
         # Produce a *plan* as a sequence of actions while any leader still sees a goal
-        cluster_plans.append(list(cluster_plan(cluster, local, memory, base_policy, s, t)))
+        cluster_plans.append(list(cluster_plan(cluster, local, p.memory, p.base_policy, s, p.t)))
 
     max_plan_len = max(len(p) for p in cluster_plans)
 
