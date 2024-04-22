@@ -73,6 +73,8 @@ def defaults(shared=Settings()):
         belief_max_friends=7,
         belief_threshold=0.1,
         track_beliefs=True, # Could be broken out into a per-policy setting
+        belief_update_egocentric=True, # If egocentric (b0) beliefs are updated in monte carlo
+        russian_trust_factor=1.0,      # Multiplier for our own beliefs over others
 
         # Clustering
         cluster_rounds=8,

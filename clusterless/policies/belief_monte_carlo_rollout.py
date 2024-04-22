@@ -17,7 +17,7 @@ def belief_monte_carlo_rollout(p, s):
         world_vals = np.zeros(s.n_worlds)
         belief     = p.beliefs[sense.code]
 
-        ego_int_b0 = belief.level_0 * s.n_worlds * s.belief_max_friends
+        ego_int_b0 = belief.level_0 * s.n_worlds * s.belief_max_friends * s.russian_trust_factor
 
         for friend_dist in sorted(belief.friends_dist, key=lambda r : r[0]): # I am simulating the people in MY belief state
             a_i  = int(friend_dist[-1])
@@ -49,16 +49,17 @@ def belief_monte_carlo_rollout(p, s):
                 base_policy_actions[ego_i, :] = act
                 world_acts[w, :] = act
                 world_vals[w]    = val
-                print(f'Emplaced world {w} and observations')
-                emplaced.full_render(world_sense_info)
+                # print(f'Emplaced world {w} and observations')
+                # emplaced.full_render(world_sense_info)
 
                 # Transition the imagined world by the action chosen by rollout
                 transition(imagined, base_policy_actions, s)
-                print(f'Imagined {w} after chosen action')
-                imagined.color_render()
+                # print(f'Imagined {w} after chosen action')
+                # imagined.color_render()
                 # Partial belief update based on this imagined world
                 add_sample_to_intermediate_belief(s, (imagined, act), int_action_probs,     int_b1_b0s)#                                              
-                add_weighted_sample_to_intermediate_belief_ego(s, imagined.grid, ego_int_b0, weight=friend_dist[1])
+                if s.belief_update_egocentric:
+                    add_weighted_sample_to_intermediate_belief_ego(s, imagined.grid, ego_int_b0, weight=friend_dist[1])
             normalize_sampled_belief(int_action_probs, int_b1_b0s, previous_probability)
             update_belief_from_simulation(s, belief, int_b1_b0s, int_action_probs, a_i, old_friends[a_i, 0])
         normalize_sampled_belief_ego(ego_int_b0, 1.0)
