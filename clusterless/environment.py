@@ -8,6 +8,8 @@ from .map import Map
 from .memory import communicate, init_memory, sense_environment
 from .belief import init_beliefs, render_belief_dists, update_belief_from_ground_truth 
 
+from time import sleep
+
 # TODO introduce a simulation settings type to consolidate this garbage :)
 # TODO Simplify this function and maybe remove about 10-20 lines
 def simulate(env_map, policy, base_policy, timesteps, s, 
@@ -88,7 +90,7 @@ def simulate(env_map, policy, base_policy, timesteps, s,
     if do_render:
         pprint(map_hashes)
 
-    assert score <= n_goals
+    if s.goal_movement == 'static': assert score <= n_goals
     metrics = dict(score=score, score_d=score_d, percent=score/n_goals, step_count=step_count, **dict(cumulative))
     return metrics
 
@@ -115,7 +117,13 @@ def transition(env_map, actions, s):
     collision_mask   = unique_counts > 1
     collision_coords = unique_coords[collision_mask]
     non_collision_coords = unique_coords[collision_mask == False]
+    # Move goals first. Good luck losers
+    if s.goal_movement != 'static':
+        move_goalposts(env_map, final_coords, s)
+    # Then check what agents got to
+    # print(env_map.grid)
     reached_locations    = env_map.grid[*at_xy(non_collision_coords)]
+    
     # Move agents to (filtered) locations
     env_map.set_at(a_info.coords, s.codes['empty'])
     env_map.set_at(final_coords,  a_info.codes)
@@ -130,6 +138,56 @@ def transition(env_map, actions, s):
         n_collisions_obstacle = np.sum(1 - allowed_move),
         n_collisions_agents   = np.sum(unique_counts) - unique_counts.shape[0],
     )
+
+def move_goalposts(env_map, final_coords, s):
+    # type of movement: filling, drifting, hunting
+    if s.goal_movement == 'filling': return filling_goals(env_map, final_coords, s)
+    if s.goal_movement == 'drifting': return drifting_goals(env_map, final_coords, s)
+    if s.goal_movement == 'hunting': return hunting_goals(env_map, final_coords, s)
+    else: raise NotImplementedError(f"Invalid goal movement provided: {s.goal_movement}")
+
+def filling_goals(env_map, final_coords, s):
+    # Goals fill the space below them with more goals. Don't kill the golden goose...
+    goals = env_map.grid == s.codes['goal']
+    rolled_goals = np.roll(goals, 1, axis=0)
+    obstacles = np.logical_or(env_map.grid == s.codes['obstacle'], env_map.grid == s.codes['dead'])
+    spawn_goal_coords = env_map.coords_of(~obstacles & rolled_goals), np.array([])
+    env_map.set_at(spawn_goal_coords)
+
+def drifting_goals(env_map, final_coords, s):
+    # TODO im too tired to make this numpy rn 
+    # TODO this is REALLY SLOW right now, making it really horrible for rollout and especially for MC variants
+    # Goals move down unless they would hit an obstacle, in which case they move to the right, up, left, stay in that order
+    goals = env_map.grid == s.codes['goal']
+    goal_coords = env_map.coords_of(goals)
+    for goal in goal_coords:
+        for direction in s.action_space:
+            next_loc = (np.array([goal+direction])) % s.size
+            if env_map.grid[*at_xy(next_loc)] == s.codes['empty']:
+                env_map.set_at(np.array([goal]),s.codes['empty'])
+                env_map.set_at(next_loc, s.codes['goal'])
+                break
+
+def hunting_goals(env_map, final_coords, s):
+    # If on this timestep an agent would have captured the goal, it drifts away (treating agents as obstacles)
+    goals = env_map.grid == s.codes['goal']
+    goal_coords = env_map.coords_of(goals)
+    # TODO make them only move when an agent is right next to them
+    # relevant_goals = (goal_coords == final_coords).all(axis=1)
+    # print("goal coords")
+    # print(goal_coords)
+    # print('final')
+    # print(final_coords)
+    # print('so we take:')
+    # print(relevant_goals)
+    for goal in goal_coords:
+        for direction in s.action_space:
+            next_loc = (np.array([goal+direction])) % s.size
+            if env_map.grid[*at_xy(next_loc)] == s.codes['empty'] and final_coords[(final_coords == next_loc).all(axis=1)].size ==0:
+                env_map.set_at(np.array([goal]),s.codes['empty'])
+                env_map.set_at(next_loc, s.codes['goal'])
+                # print(f'goal: {goal} going {direction} to {next_loc}')
+                break
 
 class CircularBehaviorException(RuntimeError):
     pass

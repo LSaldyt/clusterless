@@ -43,6 +43,7 @@ def defaults(shared=Settings()):
         # Environment settings
         gen     = np.random.default_rng(2024),
         probs   = dict(empty=0.53, obstacle=0.25, goal=0.2, agent=0.02), # Order matters! Agents come last
+        goal_movement = 'static',
 
         # Scale parameters
         size                = 8,
