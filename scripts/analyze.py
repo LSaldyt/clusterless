@@ -11,10 +11,13 @@ def get_latest(exp='env_8', **kwargs):
     stamp = ''
     print(kwargs)
     for x in latest: 
-        with (x/'meta.json').open() as f:
-            meta = json.load(f)
-        if kwargs: acceptable = reduce(lambda x,k: x and k in meta.keys() and meta[k]==dict(kwargs)[k],dict(kwargs),True)
-        else: acceptable=True
+        try:
+            with (x/'meta.json').open() as f:
+                meta = json.load(f)
+            if kwargs: acceptable = reduce(lambda x,k: x and k in meta.keys() and meta[k]==dict(kwargs)[k],dict(kwargs),True)
+            else: acceptable=True
+        except:
+            acceptable = False
         if acceptable:
             stamp = x
             break  
