@@ -32,6 +32,7 @@ class BaseExperiment(Experiment):
             pol_task = None
 
             for i_r, map in maps:
+                self.log('environments', dict(env=i_r, hash=map.hash()))
                 env_task = replace_task(progress, env_task, f'Env {i_r}', total=s.timesteps)
                 for policy_key in policies:
                     pol_task    = replace_task(progress, pol_task, f'Policy {policy_key}', total=len(policies))
@@ -44,11 +45,15 @@ class BaseExperiment(Experiment):
                         continue
                     if s.exact_n_agents > 0 and s.exact_n_agents != map.agents_info.n_agents:
                         continue
-                    stats = simulate(map, policy, base_policy, s.timesteps, s, do_render=s.do_render, 
-                                     progress=progress, task=env_task, log_fn=self.log, extra=dict(policy=policy_key, env=i_r),
-                                     track_beliefs=s.track_beliefs)
-                    stats.update(environment_index=i_r, policy=policy_key)
-                    self.log(f'summary', stats)
+                    try:
+                        stats = simulate(map, policy, base_policy, s.timesteps, s, do_render=s.do_render, 
+                                         progress=progress, task=env_task, log_fn=self.log, extra=dict(policy=policy_key, env=i_r),
+                                         track_beliefs=s.track_beliefs)
+                        stats.update(environment_index=i_r, policy=policy_key)
+                        self.log(f'summary', stats)
+                    except Exception as e:
+                        print(e)
+                        self.log('exceptions', dict(policy=policy_key, env=i_r, message=str(e)))
                     progress.update(pol_task, advance=1)
                 progress.update(map_task, advance=1)
         print(f'Results saved in {self.instance_dir}')

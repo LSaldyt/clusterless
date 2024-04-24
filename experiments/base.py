@@ -34,7 +34,7 @@ def defaults(shared=Settings()):
         All symbols inbetween are used for agent codes '''
     s = shared.derive(
         # TODO: Just use further unicode symbols and try not to repeat agent characters. Only matters for large grids and frequent agent spawns
-        symbols = '·□★' + ('ζξΞѯƔȣ☭' + '♔♕♖♗♘♙♚♛♜♝♞♟' + string.ascii_lowercase + string.ascii_uppercase) + '?☠', 
+        symbols = '·□★' + ('ζξΞѯƔȣ☭' + '♔♕♖♗♘♙♚♛♜♝♞♟' + string.ascii_lowercase + string.ascii_uppercase + misc + curs) + '?☠', 
         colors  = ['', '', 'gold3'] + agent_colors * 100 + ['', 'dark_red'],
 
         time_symbols = ' ⁕',
@@ -47,12 +47,12 @@ def defaults(shared=Settings()):
 
         # Scale parameters
         size                = 8,
-        truncated_timesteps = 128,
-        timesteps           = 128,
-        environment_samples = 8,
+        truncated_timesteps = 256,
+        timesteps           = 256,
+        environment_samples = 128,
 
         # Policy
-        policy='multiagent_rollout,wave',
+        policy='multiagent_rollout',
         base_policy='wave',
 
         # Reward settings
