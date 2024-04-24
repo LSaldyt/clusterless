@@ -151,8 +151,8 @@ def filling_goals(env_map, final_coords, s):
     goals = env_map.grid == s.codes['goal']
     rolled_goals = np.roll(goals, 1, axis=0)
     obstacles = np.logical_or(env_map.grid == s.codes['obstacle'], env_map.grid == s.codes['dead'])
-    spawn_goal_coords = env_map.coords_of(~obstacles & rolled_goals), np.array([])
-    env_map.set_at(spawn_goal_coords)
+    spawn_goal_coords = env_map.coords_of(~obstacles & rolled_goals)
+    env_map.set_at(spawn_goal_coords,s.codes['goal'])
 
 def drifting_goals(env_map, final_coords, s):
     # TODO im too tired to make this numpy rn 
@@ -169,6 +169,7 @@ def drifting_goals(env_map, final_coords, s):
                 break
 
 def hunting_goals(env_map, final_coords, s):
+    sleep(0.2)
     # If on this timestep an agent would have captured the goal, it drifts away (treating agents as obstacles)
     goals = env_map.grid == s.codes['goal']
     goal_coords = env_map.coords_of(goals)
